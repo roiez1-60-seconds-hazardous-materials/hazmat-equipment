@@ -256,35 +256,40 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
     onSave(edit.id, { dims: d });
   };
 
-  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!edit) return;
-    const currentPhotos = [...edit.photos];
-    Array.from(e.target.files || []).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const img = new window.Image();
-        img.onload = async () => {
-          // Tiny thumbnail for DB preview only (400px, 70%)
-          const thumbCanvas = document.createElement("canvas");
-          const TH = 400;
-          let tw = img.width, th = img.height;
-          if (tw > TH || th > TH) { const s = TH / Math.max(tw, th); tw *= s; th *= s; }
-          thumbCanvas.width = tw; thumbCanvas.height = th;
-          thumbCanvas.getContext("2d")!.drawImage(img, 0, 0, tw, th);
-          const dataUrl = thumbCanvas.toDataURL("image/jpeg", 0.70);
-
-          // Upload ORIGINAL file to Drive — full resolution, zero compression
-          const driveResult = await uploadToDrive(file, edit.id, edit.he, "photo");
-          
-          const newPhoto = { dataUrl, name: file.name, driveId: driveResult?.fileId || "" };
-          currentPhotos.push(newPhoto);
-          sv("photos", [...currentPhotos]);
-        };
-        img.src = ev.target!.result as string;
-      };
-      reader.readAsDataURL(file);
-    });
+    const files = Array.from(e.target.files || []);
     e.target.value = "";
+    
+    let photos = [...edit.photos];
+    
+    for (const file of files) {
+      // Create thumbnail for DB
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new window.Image();
+          img.onload = () => {
+            const c = document.createElement("canvas");
+            const TH = 400;
+            let w = img.width, h = img.height;
+            if (w > TH || h > TH) { const s = TH / Math.max(w, h); w *= s; h *= s; }
+            c.width = w; c.height = h;
+            c.getContext("2d")!.drawImage(img, 0, 0, w, h);
+            resolve(c.toDataURL("image/jpeg", 0.70));
+          };
+          img.src = ev.target!.result as string;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Upload original to Drive (full resolution)
+      const driveResult = await uploadToDrive(file, edit.id, edit.he, "photo");
+      
+      // Add to array and save immediately
+      photos = [...photos, { dataUrl, name: file.name, driveId: driveResult?.fileId || "" }];
+      sv("photos", photos);
+    }
   };
 
   // ═══ DASHBOARD ═══
