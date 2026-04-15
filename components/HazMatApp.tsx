@@ -249,52 +249,67 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
   };
 
   const sv = (field: string, value: any) => {
-    if (!edit) return;
-    const u = { ...edit, [field]: value };
-    setEdit(u);
-    onSave(edit.id, { [field]: value });
+    setEdit(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, [field]: value };
+      onSave(prev.id, { [field]: value });
+      return updated;
+    });
   };
 
   const svD = (axis: string, value: string) => {
-    if (!edit) return;
-    const d = { ...edit.dims, [axis]: value };
-    setEdit({ ...edit, dims: d });
-    onSave(edit.id, { dims: d });
+    setEdit(prev => {
+      if (!prev) return prev;
+      const d = { ...prev.dims, [axis]: value };
+      onSave(prev.id, { dims: d });
+      return { ...prev, dims: d };
+    });
   };
 
-  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!edit) return;
     const files = Array.from(e.target.files || []);
     e.target.value = "";
     
-    for (const file of files) {
-      // Create thumbnail for DB
-      const dataUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const img = new window.Image();
-          img.onload = () => {
-            const c = document.createElement("canvas");
-            const TH = 400;
-            let w = img.width, h = img.height;
-            if (w > TH || h > TH) { const s = TH / Math.max(w, h); w *= s; h *= s; }
-            c.width = w; c.height = h;
-            c.getContext("2d")!.drawImage(img, 0, 0, w, h);
-            resolve(c.toDataURL("image/jpeg", 0.70));
-          };
-          img.src = ev.target!.result as string;
-        };
-        reader.readAsDataURL(file);
-      });
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new window.Image();
+        img.onload = () => {
+          // Tiny thumbnail for DB
+          const c = document.createElement("canvas");
+          const TH = 400;
+          let w = img.width, h = img.height;
+          if (w > TH || h > TH) { const s = TH / Math.max(w, h); w *= s; h *= s; }
+          c.width = w; c.height = h;
+          c.getContext("2d")!.drawImage(img, 0, 0, w, h);
+          const dataUrl = c.toDataURL("image/jpeg", 0.70);
+          const newPhoto = { dataUrl, name: file.name, driveId: "" };
 
-      // Upload original to Drive (full resolution)
-      const driveResult = await uploadToDrive(file, edit.id, edit.he, "photo");
-      
-      // Read LATEST photos from ref (not stale closure)
-      const latest = [...photosRef.current, { dataUrl, name: file.name, driveId: driveResult?.fileId || "" }];
-      photosRef.current = latest;
-      sv("photos", latest);
-    }
+          // Show thumbnail IMMEDIATELY (functional update for latest state)
+          setEdit(prev => {
+            if (!prev) return prev;
+            const updated = [...prev.photos, newPhoto];
+            onSave(prev.id, { photos: updated });
+            return { ...prev, photos: updated };
+          });
+
+          // Upload to Drive in background (don't block UI)
+          uploadToDrive(file, edit.id, edit.he, "photo").then(result => {
+            if (result?.fileId) {
+              setEdit(prev => {
+                if (!prev) return prev;
+                const updated = prev.photos.map(p => p.name === file.name && !p.driveId ? { ...p, driveId: result.fileId } : p);
+                onSave(prev.id, { photos: updated });
+                return { ...prev, photos: updated };
+              });
+            }
+          });
+        };
+        img.src = ev.target!.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   // ═══ DASHBOARD ═══
@@ -475,7 +490,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
               {PHOTO_ANGLES.map((a, i) => {
                 const photo = edit.photos[i];
                 return (<div key={a.id} style={{ aspectRatio: "1", borderRadius: 12, border: `2px ${photo ? "solid #A5D6A7" : "dashed #E5E2DC"}`, background: photo ? "#E8F5E9" : "#FAFAF8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: photo ? "default" : "pointer", overflow: "hidden", position: "relative" }} onClick={() => !photo && fileRef.current?.click()}>
-                  {photo ? (<><img src={photo.dataUrl} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /><button onClick={e => { e.stopPropagation(); sv("photos", edit.photos.filter((_, j) => j !== i)); }} style={{ position: "absolute", top: 3, left: 3, width: 22, height: 22, borderRadius: "50%", background: "rgba(220,38,38,0.9)", border: "none", color: "#fff", cursor: "pointer", fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button></>) : (<><span style={{ fontSize: 22, opacity: 0.25 }}>📷</span><span style={{ fontSize: 10, color: "#bbb", fontWeight: 600 }}>{a[lang as "he" | "en"]}</span></>)}
+                  {photo ? (<><img src={photo.dataUrl} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /><button onClick={ev => { ev.stopPropagation(); setEdit(prev => { if (!prev) return prev; const updated = prev.photos.filter((_, j) => j !== i); onSave(prev.id, { photos: updated }); return { ...prev, photos: updated }; }); }} style={{ position: "absolute", top: 3, left: 3, width: 22, height: 22, borderRadius: "50%", background: "rgba(220,38,38,0.9)", border: "none", color: "#fff", cursor: "pointer", fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button></>) : (<><span style={{ fontSize: 22, opacity: 0.25 }}>📷</span><span style={{ fontSize: 10, color: "#bbb", fontWeight: 600 }}>{a[lang as "he" | "en"]}</span></>)}
                 </div>);
               })}
             </div>
