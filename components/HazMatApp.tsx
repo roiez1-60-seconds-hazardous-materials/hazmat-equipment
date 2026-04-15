@@ -268,15 +268,17 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
 
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!edit) return;
+    const editId = edit.id;
+    const editHe = edit.he;
     const files = Array.from(e.target.files || []);
     e.target.value = "";
+    if (!files.length) return;
     
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = (ev) => {
         const img = new window.Image();
         img.onload = () => {
-          // Tiny thumbnail for DB
           const c = document.createElement("canvas");
           const TH = 400;
           let w = img.width, h = img.height;
@@ -284,18 +286,34 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
           c.width = w; c.height = h;
           c.getContext("2d")!.drawImage(img, 0, 0, w, h);
           const dataUrl = c.toDataURL("image/jpeg", 0.70);
-          const newPhoto = { dataUrl, name: file.name, driveId: "" };
 
-          // Show thumbnail IMMEDIATELY (functional update for latest state)
+          // Add thumbnail to state immediately
           setEdit(prev => {
             if (!prev) return prev;
-            const updated = [...prev.photos, newPhoto];
+            const updated = [...prev.photos, { dataUrl, name: file.name, driveId: "" }];
             onSave(prev.id, { photos: updated });
             return { ...prev, photos: updated };
           });
 
-          // Upload to Drive in background — no state update when done
-          uploadToDrive(file, edit.id, edit.he, "photo");
+          // Silent Drive upload — ZERO state updates, ZERO re-renders
+          (async () => {
+            try {
+              if (!folderCache.current[editId]) {
+                const fRes = await fetch(`/api/folder?itemId=${editId}&itemName=${encodeURIComponent(editHe)}`);
+                const fData = await fRes.json();
+                if (fData.folderId) folderCache.current[editId] = fData.folderId;
+              }
+              if (folderCache.current[editId]) {
+                const fd = new FormData();
+                fd.append("file", file);
+                fd.append("folderId", folderCache.current[editId]);
+                fd.append("type", "photo");
+                await fetch("/api/upload", { method: "POST", body: fd });
+              }
+            } catch (err) {
+              console.error("Drive upload failed:", err);
+            }
+          })();
         };
         img.src = ev.target!.result as string;
       };
