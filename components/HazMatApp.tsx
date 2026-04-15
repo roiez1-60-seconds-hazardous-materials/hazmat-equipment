@@ -135,6 +135,9 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
   const [delModal, setDelModal] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState("");
+  const [showPwDialog, setShowPwDialog] = useState(false);
+  const [pwInput, setPwInput] = useState("");
+  const [pwError, setPwError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const photosRef = useRef<any[]>([]);
 
@@ -546,9 +549,15 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <h2 style={{ fontSize: 18, fontWeight: 900 }}>{t("ייצוא", "Export")}</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 14 }}>
-        {[{ e: "📄", t: t("PDF דו-לשוני", "Bilingual PDF"), c: "#C0272D" }, { e: "📊", t: "Excel", c: "#2E7D32" }, { e: "💾", t: t("ארכיון מדיה", "Media ZIP"), c: "#1565C0" }].map((x, i) => (
-          <div key={i} className="sec" style={{ padding: 20, cursor: "pointer" }}><span style={{ fontSize: 32 }}>{x.e}</span><h3 style={{ fontSize: 15, fontWeight: 800, margin: "8px 0 4px" }}>{x.t}</h3><span style={{ fontSize: 12, fontWeight: 700, color: x.c }}>⬇️ {t("הורד", "Download")}</span></div>
-        ))}
+        <a href="/api/export/pdf" target="_blank" rel="noopener" style={{ textDecoration: "none" }}>
+          <div className="sec" style={{ padding: 20, cursor: "pointer" }}><span style={{ fontSize: 32 }}>📄</span><h3 style={{ fontSize: 15, fontWeight: 800, margin: "8px 0 4px", color: "#2D2D2D" }}>{t("PDF דו-לשוני", "Bilingual PDF")}</h3><span style={{ fontSize: 12, fontWeight: 700, color: "#C0272D" }}>🖨️ {t("פתח והדפס", "Open & Print")}</span></div>
+        </a>
+        <a href="/api/export/excel" style={{ textDecoration: "none" }}>
+          <div className="sec" style={{ padding: 20, cursor: "pointer" }}><span style={{ fontSize: 32 }}>📊</span><h3 style={{ fontSize: 15, fontWeight: 800, margin: "8px 0 4px", color: "#2D2D2D" }}>Excel / CSV</h3><span style={{ fontSize: 12, fontWeight: 700, color: "#2E7D32" }}>⬇️ {t("הורד", "Download")}</span></div>
+        </a>
+        <a href="https://drive.google.com/drive/folders/1oFbaC6o2EHWrmHf0tfPVgUYc31SYAKrn" target="_blank" rel="noopener" style={{ textDecoration: "none" }}>
+          <div className="sec" style={{ padding: 20, cursor: "pointer" }}><span style={{ fontSize: 32 }}>📁</span><h3 style={{ fontSize: 15, fontWeight: 800, margin: "8px 0 4px", color: "#2D2D2D" }}>{t("תיקיית מדיה", "Media Folder")}</h3><span style={{ fontSize: 12, fontWeight: 700, color: "#1565C0" }}>🔗 {t("פתח ב-Google Drive", "Open in Drive")}</span></div>
+        </a>
       </div>
       <div className="sec" style={{ padding: 20 }}>
         <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 12 }}>💾 {t("אחסון", "Storage")} — <span style={{ color: "#2E7D32" }}>{t("חינם", "Free")}</span></h3>
@@ -571,7 +580,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
               <div><h1 style={{ fontSize: 14, fontWeight: 900 }}>{t('אפיון ציוד מכולת חומ"ס', "HazMat Equipment Spec")}</h1><p style={{ fontSize: 10, color: "#aaa" }}>{t('כבאות והצלה • ענף חומ"ס • אלמוג', "Fire & Rescue • HazMat")}</p></div>
             </div>
             <div style={{ display: "flex", gap: 6 }}>
-              <button onClick={() => setAdmin(!admin)} style={{ padding: "6px 12px", borderRadius: 8, border: `2px solid ${admin ? "#C0272D" : "#E5E2DC"}`, background: admin ? "#FEF2F2" : "#fff", color: admin ? "#C0272D" : "#999", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>{admin ? "🔓 " + t("עריכה", "Edit") : "🔒"}</button>
+              <button onClick={() => { if (admin) { setAdmin(false); } else { setShowPwDialog(true); setPwInput(""); setPwError(""); } }} style={{ padding: "6px 12px", borderRadius: 8, border: `2px solid ${admin ? "#C0272D" : "#E5E2DC"}`, background: admin ? "#FEF2F2" : "#fff", color: admin ? "#C0272D" : "#999", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>{admin ? "🔓 " + t("עריכה", "Edit") : "🔒"}</button>
               <button onClick={() => setLang(lang === "he" ? "en" : "he")} style={{ padding: "6px 12px", borderRadius: 8, border: "2px solid #E5E2DC", background: "#fff", fontSize: 12, fontWeight: 800, cursor: "pointer", color: "#666" }}>🌐 {lang === "he" ? "EN" : "עב"}</button>
             </div>
           </div>
@@ -600,6 +609,25 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
       {uploadMsg && (
         <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", zIndex: 100, background: uploadMsg.includes("❌") ? "#C0272D" : uploadMsg.includes("✅") ? "#2E7D32" : "#1565C0", color: "#fff", padding: "12px 24px", borderRadius: 12, fontSize: 14, fontWeight: 700, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", maxWidth: "90%", textAlign: "center" as const }}>
           {uploadMsg}
+        </div>
+      )}
+      {/* Password dialog */}
+      {showPwDialog && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setShowPwDialog(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 20, padding: 28, maxWidth: 340, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+            <div style={{ textAlign: "center", fontSize: 36, marginBottom: 12 }}>🔐</div>
+            <h3 style={{ fontSize: 16, fontWeight: 800, textAlign: "center", marginBottom: 16 }}>{t("סיסמת עריכה", "Edit Password")}</h3>
+            <input type="password" value={pwInput} onChange={e => { setPwInput(e.target.value); setPwError(""); }}
+              onKeyDown={async e => { if (e.key === "Enter") { const r = await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pwInput }) }); const d = await r.json(); if (d.ok) { setAdmin(true); setShowPwDialog(false); } else { setPwError(t("סיסמה שגויה", "Wrong password")); } } }}
+              placeholder={t("הזן סיסמה...", "Enter password...")}
+              style={{ width: "100%", padding: 14, borderRadius: 12, border: `2px solid ${pwError ? "#C0272D" : "#E5E2DC"}`, fontSize: 16, textAlign: "center", outline: "none", fontFamily: "inherit" }} autoFocus />
+            {pwError && <p style={{ color: "#C0272D", fontSize: 13, fontWeight: 700, textAlign: "center", marginTop: 8 }}>{pwError}</p>}
+            <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+              <button onClick={() => setShowPwDialog(false)} style={{ flex: 1, padding: 12, borderRadius: 12, border: "2px solid #E5E2DC", background: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{t("ביטול", "Cancel")}</button>
+              <button onClick={async () => { const r = await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pwInput }) }); const d = await r.json(); if (d.ok) { setAdmin(true); setShowPwDialog(false); } else { setPwError(t("סיסמה שגויה", "Wrong password")); } }}
+                style={{ flex: 1, padding: 12, borderRadius: 12, border: "none", background: "#C0272D", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{t("כניסה", "Enter")}</button>
+            </div>
+          </div>
         </div>
       )}
       {/* Delete modal */}
