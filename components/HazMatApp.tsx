@@ -294,17 +294,8 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
             return { ...prev, photos: updated };
           });
 
-          // Upload to Drive in background (don't block UI)
-          uploadToDrive(file, edit.id, edit.he, "photo").then(result => {
-            if (result?.fileId) {
-              setEdit(prev => {
-                if (!prev) return prev;
-                const updated = prev.photos.map(p => p.name === file.name && !p.driveId ? { ...p, driveId: result.fileId } : p);
-                onSave(prev.id, { photos: updated });
-                return { ...prev, photos: updated };
-              });
-            }
-          });
+          // Upload to Drive in background — no state update when done
+          uploadToDrive(file, edit.id, edit.he, "photo");
         };
         img.src = ev.target!.result as string;
       };
