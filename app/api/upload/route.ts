@@ -127,20 +127,16 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    const itemId = formData.get("itemId") as string;
-    const itemName = formData.get("itemName") as string;
+    const folderId = formData.get("folderId") as string;
     const type = formData.get("type") as string;
 
-    if (!file || !itemId) {
-      return NextResponse.json({ error: "Missing file or itemId" }, { status: 400 });
+    if (!file || !folderId) {
+      return NextResponse.json({ error: "Missing file or folderId" }, { status: 400 });
     }
 
     const token = await getToken();
 
-    // Find existing folder or create new one for this item
-    const folderId = await findOrCreateFolder(token, parseInt(itemId), itemName || `Item ${itemId}`);
-
-    // Upload file
+    // Upload file to the provided folder
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const ext = file.name.split(".").pop() || (type === "video" ? "mp4" : "jpg");
@@ -155,7 +151,6 @@ export async function POST(req: NextRequest) {
       ok: true,
       fileId: result.id,
       folderId,
-      webViewLink: result.webViewLink || "",
       fileName,
     });
   } catch (err: any) {

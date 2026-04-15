@@ -139,7 +139,10 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
 
   const t = (he: string, en: string) => lang === "he" ? he : en;
 
-  // Upload file DIRECTLY from browser to Google Drive (bypasses Vercel 4.5MB limit)
+  // Cache folder IDs so we don't create duplicates
+  const folderCache = useRef<Record<number, string>>({});
+
+  // Upload file DIRECTLY from browser to Google Drive
   const uploadToDrive = async (file: File, itemId: number, itemName: string, type: "photo" | "video") => {
     setUploading(true);
     setUploadMsg(t("מעלה ל-Google Drive...", "Uploading to Drive..."));
@@ -149,20 +152,40 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
       const tokenData = await tokenRes.json();
       if (tokenData.error || !tokenData.access_token) throw new Error(tokenData.error || "No token");
       const token = tokenData.access_token;
-      const folderId = tokenData.folder_id;
+      const parentFolderId = tokenData.folder_id;
 
-      // 2. Create subfolder for this item
-      const folderName = `${String(itemId).padStart(2, "0")} — ${itemName.substring(0, 50)}`;
-      const folderRes = await fetch("https://www.googleapis.com/drive/v3/files", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ name: folderName, mimeType: "application/vnd.google-apps.folder", parents: [folderId] }),
-      });
-      const folderData = await folderRes.json();
-      if (folderData.error) throw new Error(folderData.error.message || "Folder creation failed");
-      const subFolderId = folderData.id;
+      // 2. Find or create subfolder (cached)
+      let subFolderId = folderCache.current[itemId];
+      
+      if (!subFolderId) {
+        // Search for existing folder
+        const prefix = String(itemId).padStart(2, "0") + " —";
+        const searchQ = encodeURIComponent(`'${parentFolderId}' in parents and name contains '${prefix}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`);
+        const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${searchQ}&fields=files(id,name)`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const searchData = await searchRes.json();
 
-      // 3. Upload file directly to Drive using FormData (reliable, no size limit)
+        if (searchData.files && searchData.files.length > 0) {
+          subFolderId = searchData.files[0].id;
+        } else {
+          // Create new folder
+          const folderName = `${String(itemId).padStart(2, "0")} — ${itemName.substring(0, 50)}`;
+          const folderRes = await fetch("https://www.googleapis.com/drive/v3/files", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ name: folderName, mimeType: "application/vnd.google-apps.folder", parents: [parentFolderId] }),
+          });
+          const folderData = await folderRes.json();
+          if (folderData.error) throw new Error(folderData.error.message || "Folder creation failed");
+          subFolderId = folderData.id;
+        }
+        
+        // Cache it
+        folderCache.current[itemId] = subFolderId;
+      }
+
+      // 3. Upload file directly to Drive
       const fileName = `${type}_${Date.now()}.${file.name.split(".").pop() || "bin"}`;
       const metadata = new Blob([JSON.stringify({ name: fileName, parents: [subFolderId] })], { type: "application/json" });
       const form = new FormData();
