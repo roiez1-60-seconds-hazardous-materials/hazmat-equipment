@@ -19,11 +19,25 @@ async function getToken() {
   return data.access_token;
 }
 
-// Create folder in Drive
-async function createFolder(token: string, itemId: number, itemName: string) {
+// Find or create folder for an item
+async function findOrCreateFolder(token: string, itemId: number, itemName: string) {
   const parentId = process.env.GOOGLE_DRIVE_FOLDER_ID || "";
-  const name = `${String(itemId).padStart(2, "0")} — ${itemName.substring(0, 50)}`;
+  const prefix = String(itemId).padStart(2, "0") + " —";
   
+  // Search for existing folder
+  const searchQ = `'${parentId}' in parents and name contains '${prefix}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+  const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQ)}&fields=files(id,name)`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const searchData = await searchRes.json();
+  
+  if (searchData.files && searchData.files.length > 0) {
+    // Use existing folder
+    return searchData.files[0].id;
+  }
+  
+  // Create new folder
+  const name = `${String(itemId).padStart(2, "0")} — ${itemName.substring(0, 50)}`;
   const res = await fetch("https://www.googleapis.com/drive/v3/files", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -123,8 +137,8 @@ export async function POST(req: NextRequest) {
 
     const token = await getToken();
 
-    // Create folder for this item
-    const folderId = await createFolder(token, parseInt(itemId), itemName || `Item ${itemId}`);
+    // Find existing folder or create new one for this item
+    const folderId = await findOrCreateFolder(token, parseInt(itemId), itemName || `Item ${itemId}`);
 
     // Upload file
     const arrayBuffer = await file.arrayBuffer();
