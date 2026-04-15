@@ -9,7 +9,7 @@ export async function GET(req: Request) {
     client_id: "416064515394-o1f3ed9h5ls3e4apau1f9pc4slalgjtd",
     redirect_uri: `${baseUrl}/api/auth/callback`,
     response_type: "code",
-    scope: "https://www.googleapis.com/auth/drive.file",
+    scope: "https://www.googleapis.com/auth/drive",
     access_type: "offline",
     prompt: "consent",
   });
