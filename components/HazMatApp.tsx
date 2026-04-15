@@ -144,25 +144,45 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
     setUploading(true);
     setUploadMsg(t("מעלה ל-Google Drive...", "Uploading to Drive..."));
     try {
+      // Check file size — Vercel limit is 4.5MB
+      if (file.size > 4 * 1024 * 1024) {
+        setUploadMsg("❌ " + t("קובץ גדול מדי (מעל 4MB). העלה ישירות לתיקיית Drive.", "File too large (>4MB). Upload directly to Drive folder."));
+        setTimeout(() => setUploadMsg(""), 5000);
+        setUploading(false);
+        return { error: "too_large" };
+      }
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("itemId", String(itemId));
       formData.append("itemName", itemName);
       formData.append("type", type);
       const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
+      
+      // Handle non-JSON responses (e.g. Vercel error pages)
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        setUploadMsg("❌ " + t("שגיאת שרת: ", "Server error: ") + text.substring(0, 100));
+        setTimeout(() => setUploadMsg(""), 5000);
+        setUploading(false);
+        return { error: text };
+      }
+
       if (data.error) {
         setUploadMsg("❌ " + data.error);
         setTimeout(() => setUploadMsg(""), 5000);
         setUploading(false);
         return data;
       }
-      setUploadMsg("✅ " + t("הועלה בהצלחה!", "Uploaded!"));
+      setUploadMsg("✅ " + t("הועלה ל-Drive!", "Uploaded to Drive!"));
       setTimeout(() => setUploadMsg(""), 3000);
       setUploading(false);
       return data;
     } catch (err: any) {
-      setUploadMsg("❌ " + err.message);
+      setUploadMsg("❌ " + (err.message || "Unknown error"));
       setTimeout(() => setUploadMsg(""), 5000);
       setUploading(false);
       return { error: err.message };
@@ -220,7 +240,15 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
           if (w > MAX || h > MAX) { const s = MAX / Math.max(w, h); w *= s; h *= s; }
           canvas.width = w; canvas.height = h;
           canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.80);
+
+          // Small thumbnail for DB (saves space in Neon)
+          const thumbCanvas = document.createElement("canvas");
+          const TH = 400;
+          let tw = img.width, th = img.height;
+          if (tw > TH || th > TH) { const s = TH / Math.max(tw, th); tw *= s; th *= s; }
+          thumbCanvas.width = tw; thumbCanvas.height = th;
+          thumbCanvas.getContext("2d")!.drawImage(img, 0, 0, tw, th);
+          const dataUrl = thumbCanvas.toDataURL("image/jpeg", 0.70);
 
           // Convert compressed canvas to Blob for Drive upload (avoids 4.5MB limit)
           const blob = await new Promise<Blob>((resolve) => {
