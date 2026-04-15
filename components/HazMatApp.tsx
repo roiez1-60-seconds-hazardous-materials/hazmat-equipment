@@ -412,7 +412,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
                     <span style={{ fontSize: 11, fontWeight: 700, color: c.color }}>{c.emoji} {c[lang as "he" | "en"]}</span>
                     {item.st === "new" && <span className="tag" style={{ background: "#FEF3C7", color: "#92400E" }}>✨ {t("חדש", "New")}</span>}
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.4, color: "#2D2D2D", marginBottom: 6 }}>{item.he}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.4, color: "#2D2D2D", marginBottom: 6 }}>{lang === "en" && item.en ? item.en : item.he}</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                     {item.qty && <span className="tag" style={{ background: "#f5f5f0", color: "#666" }}>×{item.qty}</span>}
                     {item.wt && <span className="tag" style={{ background: "#E8F5E9", color: "#2E7D32" }}>{item.wt}kg</span>}
@@ -450,10 +450,11 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexWrap: "wrap" }}>
               <span style={{ width: 32, height: 32, borderRadius: 10, background: c.bg, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 900, color: c.color }}>{edit.id}</span>
               <span style={{ fontSize: 11, fontWeight: 700, color: c.color, background: c.bg, padding: "3px 10px", borderRadius: 8 }}>{c.emoji} {c[lang as "he" | "en"]}</span>
-              {edit.st === "new" && <span className="tag" style={{ background: "#FEF3C7", color: "#92400E" }}>✨ חדש</span>}
+              {edit.st === "new" && <span className="tag" style={{ background: "#FEF3C7", color: "#92400E" }}>✨ {t("חדש", "New")}</span>}
             </div>
-            <h2 style={{ fontSize: 18, fontWeight: 900, lineHeight: 1.3 }}>{edit.he || t("פריט חדש", "New Item")}</h2>
-            {edit.en && <p style={{ fontSize: 12, color: "#aaa", marginTop: 3, direction: "ltr", textAlign: "left" as const }}>{edit.en}</p>}
+            <h2 style={{ fontSize: 18, fontWeight: 900, lineHeight: 1.3 }}>{lang === "en" && edit.en ? edit.en : (edit.he || t("פריט חדש", "New Item"))}</h2>
+            {lang === "he" && edit.en && <p style={{ fontSize: 12, color: "#aaa", marginTop: 3, direction: "ltr", textAlign: "left" as const }}>{edit.en}</p>}
+            {lang === "en" && edit.he && <p style={{ fontSize: 12, color: "#aaa", marginTop: 3 }}>{edit.he}</p>}
           </div>
           <Ring value={p} size={54} color={c.color} />
         </div>
@@ -523,7 +524,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
             </div>
             <input ref={fileRef} type="file" accept="image/*" capture="environment" multiple style={{ display: "none" }} onChange={handlePhoto} />
             <button onClick={() => fileRef.current?.click()} style={{ width: "100%", padding: 14, borderRadius: 12, border: "2px dashed #d5d2cc", background: "transparent", color: "#999", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>📤 {t("העלה תמונות", "Upload")}</button>
-            <div style={{ display: "flex", gap: 8, padding: 12, background: "#E3F2FD", borderRadius: 10 }}><span style={{ fontSize: 14 }}>💡</span><p style={{ fontSize: 11, color: "#1565C0", lineHeight: 1.5 }}>{t("תמונות נדחסות אוטומטית ונשמרות ב-Google Drive. צלם עם סרגל.", "Auto-compressed & saved to Google Drive.")}</p></div>
+            <div style={{ display: "flex", gap: 8, padding: 12, background: "#E3F2FD", borderRadius: 10 }}><span style={{ fontSize: 14 }}>💡</span><p style={{ fontSize: 11, color: "#1565C0", lineHeight: 1.5 }}>{t("תמונות נשמרות ברזולוציה מלאה ב-Google Drive. צלם עם סרגל לייחוס.", "Full resolution photos saved to Google Drive. Include a ruler for scale.")}</p></div>
           </div>
         </div>
 
