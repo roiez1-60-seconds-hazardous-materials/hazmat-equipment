@@ -133,9 +133,21 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
   const [q, setQ] = useState("");
   const [admin, setAdmin] = useState(false);
   const [delModal, setDelModal] = useState<number | null>(null);
+  const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const t = (he: string, en: string) => lang === "he" ? he : en;
+
+  // Upload file to Google Drive via API
+  const uploadToDrive = async (file: File, itemId: number, itemName: string, type: "photo" | "video") => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("itemId", String(itemId));
+    formData.append("itemName", itemName);
+    formData.append("type", type);
+    const res = await fetch("/api/upload", { method: "POST", body: formData });
+    return res.json();
+  };
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [tab]);
 
@@ -177,17 +189,29 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!edit) return;
     Array.from(e.target.files || []).forEach(file => {
+      // Compress for preview in DB
       const reader = new FileReader();
       reader.onload = (ev) => {
         const img = new window.Image();
-        img.onload = () => {
+        img.onload = async () => {
           const canvas = document.createElement("canvas");
           const MAX = 2000;
           let w = img.width, h = img.height;
           if (w > MAX || h > MAX) { const s = MAX / Math.max(w, h); w *= s; h *= s; }
           canvas.width = w; canvas.height = h;
           canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
-          sv("photos", [...edit.photos, { dataUrl: canvas.toDataURL("image/jpeg", 0.85), name: file.name }]);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+
+          // Upload original to Google Drive
+          setUploading(true);
+          try {
+            const driveResult = await uploadToDrive(file, edit.id, edit.he, "photo");
+            sv("photos", [...edit.photos, { dataUrl, name: file.name, driveId: driveResult.fileId || "" }]);
+          } catch {
+            // Drive failed — save preview anyway
+            sv("photos", [...edit.photos, { dataUrl, name: file.name }]);
+          }
+          setUploading(false);
         };
         img.src = ev.target!.result as string;
       };
@@ -392,7 +416,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
               <span style={{ fontSize: 32, opacity: 0.3 }}>🎬</span>
               <p style={{ fontSize: 12, color: "#aaa" }}>{t("צלם/העלה סרטון סיבוב", "Upload rotation video")}</p>
               <span style={{ fontSize: 10, color: "#bbb", background: "#fff", padding: "4px 12px", borderRadius: 20, border: "1px solid #E5E2DC" }}>{t("עד 100MB • Google Drive", "Up to 100MB • Google Drive")}</span>
-              <input id={`vid-${edit.id}`} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) sv("video", { name: f.name, size: f.size }); }} />
+              <input id={`vid-${edit.id}`} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={async e => { const f = e.target.files?.[0]; if (f) { setUploading(true); try { const dr = await uploadToDrive(f, edit.id, edit.he, "video"); sv("video", { name: f.name, size: f.size, driveId: dr.fileId || "" }); } catch { sv("video", { name: f.name, size: f.size }); } setUploading(false); } }} />
             </div>
             {edit.video && (<div style={{ display: "flex", alignItems: "center", gap: 10, padding: 12, background: "#DCFCE7", borderRadius: 12 }}><span style={{ fontSize: 18 }}>✅</span><div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#166534" }}>{edit.video.name}</p><p style={{ fontSize: 10, color: "#22C55E" }}>{(edit.video.size / 1024 / 1024).toFixed(1)} MB</p></div><button onClick={() => sv("video", null)} style={{ padding: 6, background: "transparent", border: "none", cursor: "pointer", fontSize: 16 }}>🗑️</button></div>)}
           </div>
@@ -456,6 +480,12 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
         </div>
       </footer>
 
+      {/* Delete modal */}
+      {uploading && (
+        <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", zIndex: 100, background: "#1565C0", color: "#fff", padding: "12px 24px", borderRadius: 12, fontSize: 14, fontWeight: 700, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", gap: 8 }}>
+          ⏳ {t("מעלה ל-Google Drive...", "Uploading to Google Drive...")}
+        </div>
+      )}
       {/* Delete modal */}
       {delModal !== null && (() => {
         const item = items.find(i => i.id === delModal);
