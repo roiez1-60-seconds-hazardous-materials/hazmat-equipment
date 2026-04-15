@@ -145,9 +145,11 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
     setUploadMsg(t("מעלה ל-Google Drive...", "Uploading to Drive..."));
     try {
       // 1. Get temporary access token from server
-      const tokenRes = await fetch("/api/drive-token");
-      const { token, folderId, error: tokenErr } = await tokenRes.json();
-      if (tokenErr || !token) throw new Error(tokenErr || "No token");
+      const tokenRes = await fetch("/api/token");
+      const tokenData = await tokenRes.json();
+      if (tokenData.error || !tokenData.access_token) throw new Error(tokenData.error || "No token");
+      const token = tokenData.access_token;
+      const folderId = tokenData.folder_id;
 
       // 2. Create subfolder for this item
       const folderName = `${String(itemId).padStart(2, "0")} — ${itemName.substring(0, 50)}`;
@@ -157,26 +159,22 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
         body: JSON.stringify({ name: folderName, mimeType: "application/vnd.google-apps.folder", parents: [folderId] }),
       });
       const folderData = await folderRes.json();
+      if (folderData.error) throw new Error(folderData.error.message || "Folder creation failed");
       const subFolderId = folderData.id;
 
-      // 3. Upload file directly to Drive (no size limit!)
+      // 3. Upload file directly to Drive using FormData (reliable, no size limit)
       const fileName = `${type}_${Date.now()}.${file.name.split(".").pop() || "bin"}`;
-      const metadata = JSON.stringify({ name: fileName, parents: [subFolderId] });
-      const boundary = "hazmat_" + Date.now();
-      
-      const body = new Blob([
-        `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: ${file.type}\r\n\r\n`,
-        file,
-        `\r\n--${boundary}--`,
-      ]);
+      const metadata = new Blob([JSON.stringify({ name: fileName, parents: [subFolderId] })], { type: "application/json" });
+      const form = new FormData();
+      form.append("metadata", metadata);
+      form.append("file", file);
 
       const uploadRes = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": `multipart/related; boundary=${boundary}` },
-        body,
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
       });
       const uploadData = await uploadRes.json();
-
       if (uploadData.error) throw new Error(uploadData.error.message || JSON.stringify(uploadData.error));
 
       // 4. Make file public
@@ -186,7 +184,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
         body: JSON.stringify({ role: "reader", type: "anyone" }),
       });
 
-      setUploadMsg("✅ " + t("הועלה ל-Drive!", "Uploaded to Drive!"));
+      setUploadMsg(`✅ ${t("הועלה ל-Drive!", "Uploaded!")} (${(file.size/1024/1024).toFixed(1)}MB)`);
       setTimeout(() => setUploadMsg(""), 3000);
       setUploading(false);
       return { ok: true, fileId: uploadData.id, folderId: subFolderId };
