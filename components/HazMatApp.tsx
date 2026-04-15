@@ -139,50 +139,59 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
 
   const t = (he: string, en: string) => lang === "he" ? he : en;
 
-  // Upload file to Google Drive via API
+  // Upload file DIRECTLY from browser to Google Drive (bypasses Vercel 4.5MB limit)
   const uploadToDrive = async (file: File, itemId: number, itemName: string, type: "photo" | "video") => {
     setUploading(true);
     setUploadMsg(t("מעלה ל-Google Drive...", "Uploading to Drive..."));
     try {
-      // Check file size — Vercel limit is 4.5MB
-      if (file.size > 4 * 1024 * 1024) {
-        setUploadMsg("❌ " + t("קובץ גדול מדי (מעל 4MB). העלה ישירות לתיקיית Drive.", "File too large (>4MB). Upload directly to Drive folder."));
-        setTimeout(() => setUploadMsg(""), 5000);
-        setUploading(false);
-        return { error: "too_large" };
-      }
+      // 1. Get temporary access token from server
+      const tokenRes = await fetch("/api/drive-token");
+      const { token, folderId, error: tokenErr } = await tokenRes.json();
+      if (tokenErr || !token) throw new Error(tokenErr || "No token");
 
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("itemId", String(itemId));
-      formData.append("itemName", itemName);
-      formData.append("type", type);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      // 2. Create subfolder for this item
+      const folderName = `${String(itemId).padStart(2, "0")} — ${itemName.substring(0, 50)}`;
+      const folderRes = await fetch("https://www.googleapis.com/drive/v3/files", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ name: folderName, mimeType: "application/vnd.google-apps.folder", parents: [folderId] }),
+      });
+      const folderData = await folderRes.json();
+      const subFolderId = folderData.id;
+
+      // 3. Upload file directly to Drive (no size limit!)
+      const fileName = `${type}_${Date.now()}.${file.name.split(".").pop() || "bin"}`;
+      const metadata = JSON.stringify({ name: fileName, parents: [subFolderId] });
+      const boundary = "hazmat_" + Date.now();
       
-      // Handle non-JSON responses (e.g. Vercel error pages)
-      const text = await res.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        setUploadMsg("❌ " + t("שגיאת שרת: ", "Server error: ") + text.substring(0, 100));
-        setTimeout(() => setUploadMsg(""), 5000);
-        setUploading(false);
-        return { error: text };
-      }
+      const body = new Blob([
+        `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: ${file.type}\r\n\r\n`,
+        file,
+        `\r\n--${boundary}--`,
+      ]);
 
-      if (data.error) {
-        setUploadMsg("❌ " + data.error);
-        setTimeout(() => setUploadMsg(""), 5000);
-        setUploading(false);
-        return data;
-      }
+      const uploadRes = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": `multipart/related; boundary=${boundary}` },
+        body,
+      });
+      const uploadData = await uploadRes.json();
+
+      if (uploadData.error) throw new Error(uploadData.error.message || JSON.stringify(uploadData.error));
+
+      // 4. Make file public
+      await fetch(`https://www.googleapis.com/drive/v3/files/${uploadData.id}/permissions`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "reader", type: "anyone" }),
+      });
+
       setUploadMsg("✅ " + t("הועלה ל-Drive!", "Uploaded to Drive!"));
       setTimeout(() => setUploadMsg(""), 3000);
       setUploading(false);
-      return data;
+      return { ok: true, fileId: uploadData.id, folderId: subFolderId };
     } catch (err: any) {
-      setUploadMsg("❌ " + (err.message || "Unknown error"));
+      setUploadMsg("❌ " + (err.message || "Upload failed"));
       setTimeout(() => setUploadMsg(""), 5000);
       setUploading(false);
       return { error: err.message };
