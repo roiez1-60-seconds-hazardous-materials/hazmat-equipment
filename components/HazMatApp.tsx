@@ -248,12 +248,18 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
     openItem(ni);
   };
 
+  // Debounced save — updates DB after 500ms of no typing
+  const saveTimer = useRef<any>(null);
+  const debouncedSave = (id: number, updates: Partial<EquipmentItem>) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => onSave(id, updates), 500);
+  };
+
   const sv = (field: string, value: any) => {
     setEdit(prev => {
       if (!prev) return prev;
-      const updated = { ...prev, [field]: value };
-      onSave(prev.id, { [field]: value });
-      return updated;
+      debouncedSave(prev.id, { [field]: value });
+      return { ...prev, [field]: value };
     });
   };
 
@@ -261,8 +267,17 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
     setEdit(prev => {
       if (!prev) return prev;
       const d = { ...prev.dims, [axis]: value };
-      onSave(prev.id, { dims: d });
+      debouncedSave(prev.id, { dims: d });
       return { ...prev, dims: d };
+    });
+  };
+
+  // Save photos/video immediately (not debounced)
+  const svNow = (field: string, value: any) => {
+    setEdit(prev => {
+      if (!prev) return prev;
+      onSave(prev.id, { [field]: value });
+      return { ...prev, [field]: value };
     });
   };
 
@@ -517,9 +532,9 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
               <span style={{ fontSize: 32, opacity: 0.3 }}>🎬</span>
               <p style={{ fontSize: 12, color: "#aaa" }}>{t("צלם/העלה סרטון סיבוב", "Upload rotation video")}</p>
               <span style={{ fontSize: 10, color: "#bbb", background: "#fff", padding: "4px 12px", borderRadius: 20, border: "1px solid #E5E2DC" }}>{t("עד 100MB • Google Drive", "Up to 100MB • Google Drive")}</span>
-              <input id={`vid-${edit.id}`} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={async e => { const f = e.target.files?.[0]; if (f && edit) { const dr = await uploadToDrive(f, edit.id, edit.he, "video"); sv("video", { name: f.name, size: f.size, driveId: dr?.fileId || "" }); } }} />
+              <input id={`vid-${edit.id}`} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={async e => { const f = e.target.files?.[0]; if (f && edit) { const dr = await uploadToDrive(f, edit.id, edit.he, "video"); svNow("video", { name: f.name, size: f.size, driveId: dr?.fileId || "" }); } }} />
             </div>
-            {edit.video && (<div style={{ display: "flex", alignItems: "center", gap: 10, padding: 12, background: "#DCFCE7", borderRadius: 12 }}><span style={{ fontSize: 18 }}>✅</span><div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#166534" }}>{edit.video.name}</p><p style={{ fontSize: 10, color: "#22C55E" }}>{(edit.video.size / 1024 / 1024).toFixed(1)} MB</p></div><button onClick={() => sv("video", null)} style={{ padding: 6, background: "transparent", border: "none", cursor: "pointer", fontSize: 16 }}>🗑️</button></div>)}
+            {edit.video && (<div style={{ display: "flex", alignItems: "center", gap: 10, padding: 12, background: "#DCFCE7", borderRadius: 12 }}><span style={{ fontSize: 18 }}>✅</span><div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#166534" }}>{edit.video.name}</p><p style={{ fontSize: 10, color: "#22C55E" }}>{(edit.video.size / 1024 / 1024).toFixed(1)} MB</p></div><button onClick={() => svNow("video", null)} style={{ padding: 6, background: "transparent", border: "none", cursor: "pointer", fontSize: 16 }}>🗑️</button></div>)}
           </div>
         </div>
       </div>
@@ -569,9 +584,9 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
       </header>
 
       <main style={{ maxWidth: 900, margin: "0 auto", padding: "20px 16px" }}>
-        {tab === "dash" && <Dash />}
-        {tab === "detail" && <Detail />}
-        {tab === "export" && <Export />}
+        {tab === "dash" && Dash()}
+        {tab === "detail" && Detail()}
+        {tab === "export" && Export()}
       </main>
 
       <footer style={{ borderTop: "2px solid #ECEAE4", background: "#fff", padding: "14px 24px", marginTop: 40 }}>
