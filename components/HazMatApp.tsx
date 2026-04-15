@@ -437,7 +437,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
       <div className="sec" style={{ padding: 20 }}>
         <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 12 }}>💾 {t("אחסון", "Storage")} — <span style={{ color: "#2E7D32" }}>{t("חינם", "Free")}</span></h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <div style={{ padding: 16, borderRadius: 12, background: "#E8F5E9", border: "1px solid #A5D6A7" }}><p style={{ fontSize: 12, fontWeight: 800, color: "#2E7D32" }}>📊 Supabase — DB</p><p style={{ fontSize: 11, color: "#388E3C" }}>{t("מטא-דאטה בלבד", "Metadata only")}</p></div>
+          <div style={{ padding: 16, borderRadius: 12, background: "#E8F5E9", border: "1px solid #A5D6A7" }}><p style={{ fontSize: 12, fontWeight: 800, color: "#2E7D32" }}>📊 Neon Postgres — DB</p><p style={{ fontSize: 11, color: "#388E3C" }}>{t("מטא-דאטה בלבד", "Metadata only")}</p></div>
           <div style={{ padding: 16, borderRadius: 12, background: "#E3F2FD", border: "1px solid #90CAF9" }}><p style={{ fontSize: 12, fontWeight: 800, color: "#1565C0" }}>📁 Google Drive</p><p style={{ fontSize: 11, color: "#1976D2" }}>{t("תמונות + סרטונים", "Photos + videos")}</p></div>
         </div>
       </div>
