@@ -6,7 +6,12 @@ export const metadata: Metadata = {
   description: "HazMat Container Equipment Characterization App",
   manifest: "/manifest.json",
   themeColor: "#C0272D",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({

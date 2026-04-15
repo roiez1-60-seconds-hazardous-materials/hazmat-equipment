@@ -49,9 +49,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Limit body size for uploads (100MB for videos)
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Route segment config (Next.js 14+)
+export const runtime = "nodejs";
+export const maxDuration = 60;
