@@ -1,0 +1,9 @@
+{
+  "name": "אפיון ציוד מכולת חומ״ס",
+  "short_name": "ציוד חומ״ס",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAF8",
+  "theme_color": "#C0272D",
+  "icons": []
+}

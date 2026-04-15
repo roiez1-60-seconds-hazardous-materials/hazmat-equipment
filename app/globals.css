@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --fire: #C0272D;
+  --fire-dark: #8B1A1A;
+  --fire-light: #FEF2F2;
+  --bg: #FAFAF8;
+  --border: #ECEAE4;
+  --border-input: #E5E2DC;
+}
+
+* { box-sizing: border-box; margin: 0; }
+
+body {
+  font-family: 'Heebo', sans-serif;
+  background: var(--bg);
+  color: #2D2D2D;
+}
+
+/* Custom input style */
+.inp {
+  @apply w-full px-3.5 py-3 bg-white border-2 border-[#E5E2DC] rounded-xl text-sm outline-none transition-colors;
+  font-family: inherit;
+}
+.inp:focus {
+  border-color: var(--fire);
+}
+
+/* Select arrow fix */
+select.inp {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 12px center;
+  padding-left: 36px;
+}
+
+/* Card hover */
+.card {
+  @apply bg-white border-2 border-[#ECEAE4] rounded-2xl overflow-hidden transition-all cursor-pointer;
+}
+.card:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+  border-color: #d5d2cc;
+}
+
+/* Section */
+.sec {
+  @apply bg-white border-2 border-[#ECEAE4] rounded-2xl overflow-hidden;
+}
+
+/* Label */
+.lbl {
+  @apply block text-xs font-bold text-gray-400 mb-1.5;
+}
+
+/* Tag */
+.tag {
+  @apply inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-lg;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
