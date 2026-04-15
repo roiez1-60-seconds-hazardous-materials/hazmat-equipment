@@ -215,17 +215,22 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
         const img = new window.Image();
         img.onload = async () => {
           const canvas = document.createElement("canvas");
-          const MAX = 2000;
+          const MAX = 1600;
           let w = img.width, h = img.height;
           if (w > MAX || h > MAX) { const s = MAX / Math.max(w, h); w *= s; h *= s; }
           canvas.width = w; canvas.height = h;
           canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.80);
 
-          // Upload to Google Drive
-          const driveResult = await uploadToDrive(file, edit.id, edit.he, "photo");
+          // Convert compressed canvas to Blob for Drive upload (avoids 4.5MB limit)
+          const blob = await new Promise<Blob>((resolve) => {
+            canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.80);
+          });
+          const compressedFile = new File([blob], file.name, { type: "image/jpeg" });
+
+          // Upload compressed version to Google Drive
+          const driveResult = await uploadToDrive(compressedFile, edit.id, edit.he, "photo");
           
-          // Save photo (with or without Drive ID)
           const newPhoto = { dataUrl, name: file.name, driveId: driveResult?.fileId || "" };
           currentPhotos.push(newPhoto);
           sv("photos", [...currentPhotos]);
