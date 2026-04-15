@@ -136,6 +136,12 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const photosRef = useRef<any[]>([]);
+
+  // Keep photosRef in sync with edit.photos
+  useEffect(() => {
+    if (edit) photosRef.current = edit.photos;
+  }, [edit?.photos]);
 
   const t = (he: string, en: string) => lang === "he" ? he : en;
 
@@ -261,8 +267,6 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
     const files = Array.from(e.target.files || []);
     e.target.value = "";
     
-    let photos = [...edit.photos];
-    
     for (const file of files) {
       // Create thumbnail for DB
       const dataUrl = await new Promise<string>((resolve) => {
@@ -286,9 +290,10 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
       // Upload original to Drive (full resolution)
       const driveResult = await uploadToDrive(file, edit.id, edit.he, "photo");
       
-      // Add to array and save immediately
-      photos = [...photos, { dataUrl, name: file.name, driveId: driveResult?.fileId || "" }];
-      sv("photos", photos);
+      // Read LATEST photos from ref (not stale closure)
+      const latest = [...photosRef.current, { dataUrl, name: file.name, driveId: driveResult?.fileId || "" }];
+      photosRef.current = latest;
+      sv("photos", latest);
     }
   };
 
