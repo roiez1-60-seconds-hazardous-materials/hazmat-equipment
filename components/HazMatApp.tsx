@@ -444,20 +444,32 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
 
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-          <button onClick={() => { setTab("dash"); setEdit(null); }} style={{ marginTop: 2, padding: 10, borderRadius: 12, background: "#fff", border: "2px solid #E5E2DC", cursor: "pointer", fontSize: 18 }}>⬅️</button>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexWrap: "wrap" }}>
-              <span style={{ width: 32, height: 32, borderRadius: 10, background: c.bg, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 900, color: c.color }}>{edit.id}</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: c.color, background: c.bg, padding: "3px 10px", borderRadius: 8 }}>{c.emoji} {c[lang as "he" | "en"]}</span>
-              {edit.st === "new" && <span className="tag" style={{ background: "#FEF3C7", color: "#92400E" }}>✨ {t("חדש", "New")}</span>}
+        {/* Sticky Header */}
+        <div style={{ 
+          position: "sticky", 
+          top: 78, 
+          zIndex: 40,
+          background: "rgba(250,250,248,0.95)", 
+          backdropFilter: "blur(12px)", 
+          marginInline: -16, 
+          paddingInline: 16, 
+          paddingBlock: 12,
+          borderBottom: "2px solid #ECEAE4",
+          display: "flex", 
+          alignItems: "center", 
+          gap: 10,
+        }}>
+          <button onClick={() => { setTab("dash"); setEdit(null); }} style={{ padding: 8, borderRadius: 10, background: "#fff", border: "2px solid #E5E2DC", cursor: "pointer", fontSize: 16, flexShrink: 0 }}>⬅️</button>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2, flexWrap: "wrap" }}>
+              <span style={{ width: 22, height: 22, borderRadius: 6, background: c.bg, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 900, color: c.color, flexShrink: 0 }}>{edit.id}</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: c.color, background: c.bg, padding: "2px 6px", borderRadius: 6 }}>{c.emoji} {c[lang as "he" | "en"]}</span>
+              {edit.is_electric && <span style={{ fontSize: 10, fontWeight: 700, color: "#E65100", background: "#FFF3E0", padding: "2px 6px", borderRadius: 6 }}>⚡</span>}
+              {edit.st === "new" && <span style={{ fontSize: 10, fontWeight: 700, color: "#92400E", background: "#FEF3C7", padding: "2px 6px", borderRadius: 6 }}>✨</span>}
             </div>
-            <h2 style={{ fontSize: 18, fontWeight: 900, lineHeight: 1.3 }}>{lang === "en" && edit.en ? edit.en : (edit.he || t("פריט חדש", "New Item"))}</h2>
-            {lang === "he" && edit.en && <p style={{ fontSize: 12, color: "#aaa", marginTop: 3, direction: "ltr", textAlign: "left" as const }}>{edit.en}</p>}
-            {lang === "en" && edit.he && <p style={{ fontSize: 12, color: "#aaa", marginTop: 3 }}>{edit.he}</p>}
+            <h2 style={{ fontSize: 14, fontWeight: 900, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{lang === "en" && edit.en ? edit.en : (edit.he || t("פריט חדש", "New Item"))}</h2>
           </div>
-          <Ring value={p} size={54} color={c.color} />
+          <Ring value={p} size={40} color={c.color} />
         </div>
 
         {/* Details */}
