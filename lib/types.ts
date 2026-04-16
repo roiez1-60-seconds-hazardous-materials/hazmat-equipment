@@ -1,4 +1,4 @@
-export type Shape = "box" | "cylinder" | "sphere" | "long" | "bag" | "irregular";
+export type Shape = "box" | "cylinder" | "sphere" | "long" | "garment" | "bag" | "irregular";
 export type Status = "existing" | "new";
 export type Category = "protection" | "stabilization" | "containment" | "monitoring" | "additional";
 
@@ -82,6 +82,7 @@ export const SHAPES: ShapeDef[] = [
   { id: "cylinder",  emoji: "🛢️", he: "גליל / חבית",  en: "Cylinder / Drum", fields: ["d","h"] },
   { id: "sphere",    emoji: "⚽", he: "כדורי",         en: "Spherical",       fields: ["d"] },
   { id: "long",      emoji: "📏", he: "ארוך וצר",      en: "Long & Narrow",   fields: ["l","d"] },
+  { id: "garment",   emoji: "👕", he: "חליפה / תלוי", en: "Garment / Hanging", fields: ["l","w","h"] },
   { id: "bag",       emoji: "🎒", he: "שק / תיק",     en: "Bag / Pack",      fields: ["l","w","h"] },
   { id: "irregular", emoji: "⚙️", he: "לא סדיר",      en: "Irregular",       fields: ["l","w","h"] },
 ];

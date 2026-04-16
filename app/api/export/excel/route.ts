@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
       cylinder:  ["גליל",      "Cylinder"],
       sphere:    ["כדורי",      "Spherical"],
       long:      ["ארוך וצר",   "Long & Narrow"],
+      garment:   ["חליפה/תלוי", "Garment/Hanging"],
       bag:       ["שק/תיק",    "Bag"],
       irregular: ["לא סדיר",    "Irregular"],
     };

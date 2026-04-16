@@ -23,6 +23,9 @@ export async function GET() {
     await sql`UPDATE equipment SET is_electric = true WHERE id IN (
       5, 14, 26, 34, 35, 36, 37, 38, 39, 41, 45, 46, 47, 49, 50
     )`;
+
+    // Auto-set HazMat suits to garment shape (items 1=Level A, 2=Level B)
+    await sql`UPDATE equipment SET shape = 'garment' WHERE id IN (1, 2)`;
     
     // Count electric items
     const count = await sql`SELECT COUNT(*) as c FROM equipment WHERE is_electric = true`;

@@ -68,6 +68,7 @@ function ShapeViewer({ dims, shape }: { dims: EquipmentItem["dims"]; shape: Shap
     if (shape === "sphere") geo = new THREE.SphereGeometry(eL / 2, 24, 18);
     else if (shape === "cylinder") geo = new THREE.CylinderGeometry(eL / 2, eL / 2, eH, 24);
     else if (shape === "long") { geo = new THREE.CylinderGeometry(eW / 2, eW / 2, eL, 16); geo.rotateZ(Math.PI / 2); }
+    else if (shape === "garment") geo = new THREE.BoxGeometry(eL, eH, Math.min(eW, 8)); // Flat hanging shape — depth limited
     else if (shape === "bag") { geo = new THREE.SphereGeometry(Math.max(eL, eW, eH) / 2, 16, 12); geo.scale(eL / Math.max(eL, eW, eH), eH / Math.max(eL, eW, eH), eW / Math.max(eL, eW, eH)); }
     else geo = new THREE.BoxGeometry(eL, eH, eW);
 
@@ -460,7 +461,8 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
           alignItems: "center", 
           gap: 10,
         }}>
-          <button onClick={() => { setTab("dash"); setEdit(null); }} style={{ padding: 8, borderRadius: 10, background: "#fff", border: "2px solid #E5E2DC", cursor: "pointer", fontSize: 16, flexShrink: 0 }}>⬅️</button>
+          <button onClick={() => { setTab("dash"); setEdit(null); }} style={{ padding: "6px 10px", borderRadius: 10, background: "#fff", border: "2px solid #E5E2DC", cursor: "pointer", fontSize: 18, flexShrink: 0, lineHeight: 1 }}>{lang === "he" ? "→" : "←"}</button>
+          <Ring value={p} size={40} color={c.color} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2, flexWrap: "wrap" }}>
               <span style={{ width: 22, height: 22, borderRadius: 6, background: c.bg, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 900, color: c.color, flexShrink: 0 }}>{edit.id}</span>
@@ -468,9 +470,8 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
               {edit.is_electric && <span style={{ fontSize: 10, fontWeight: 700, color: "#E65100", background: "#FFF3E0", padding: "2px 6px", borderRadius: 6 }}>⚡</span>}
               {edit.st === "new" && <span style={{ fontSize: 10, fontWeight: 700, color: "#92400E", background: "#FEF3C7", padding: "2px 6px", borderRadius: 6 }}>✨</span>}
             </div>
-            <h2 style={{ fontSize: 14, fontWeight: 900, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{lang === "en" && edit.en ? edit.en : (edit.he || t("פריט חדש", "New Item"))}</h2>
+            <h2 style={{ fontSize: 13, fontWeight: 900, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{lang === "en" && edit.en ? edit.en : (edit.he || t("פריט חדש", "New Item"))}</h2>
           </div>
-          <Ring value={p} size={40} color={c.color} />
         </div>
 
         {/* Details */}
