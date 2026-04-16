@@ -65,15 +65,72 @@ function ShapeViewer({ dims, shape }: { dims: EquipmentItem["dims"]; shape: Shap
     grid.position.y = -eH / 2; scene.add(grid);
 
     let geo: THREE.BufferGeometry;
+    let isGarment = false;
     if (shape === "sphere") geo = new THREE.SphereGeometry(eL / 2, 24, 18);
     else if (shape === "cylinder") geo = new THREE.CylinderGeometry(eL / 2, eL / 2, eH, 24);
     else if (shape === "long") { geo = new THREE.CylinderGeometry(eW / 2, eW / 2, eL, 16); geo.rotateZ(Math.PI / 2); }
-    else if (shape === "garment") geo = new THREE.BoxGeometry(eL, eH, Math.min(eW, 8)); // Flat hanging shape — depth limited
+    else if (shape === "garment") {
+      isGarment = true;
+      geo = new THREE.BoxGeometry(1, 1, 1); // placeholder, real parts added below
+    }
     else if (shape === "bag") { geo = new THREE.SphereGeometry(Math.max(eL, eW, eH) / 2, 16, 12); geo.scale(eL / Math.max(eL, eW, eH), eH / Math.max(eL, eW, eH), eW / Math.max(eL, eW, eH)); }
     else geo = new THREE.BoxGeometry(eL, eH, eW);
 
-    scene.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0xC0272D })));
-    scene.add(new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ color: 0xC0272D, transparent: true, opacity: 0.06, side: THREE.DoubleSide })));
+    if (isGarment) {
+      // Full HazMat suit — body, sleeves, legs, hood
+      const suitMat = new THREE.MeshPhysicalMaterial({ color: 0xC0272D, transparent: true, opacity: 0.45, side: THREE.DoubleSide });
+      const edgeMat = new THREE.LineBasicMaterial({ color: 0xC0272D });
+      
+      const height = eL;    // L = total height of suit
+      const width = eW;     // W = shoulder width
+      const depth = eH;     // H = suit depth
+      
+      const shoulderY = height * 0.22;
+      const hipY = -height * 0.08;
+      const torsoHeight = height * 0.42;
+      const legHeight = height * 0.48;
+      const sleeveLen = width * 0.48;
+      const partDepth = Math.max(depth, width * 0.30);
+      
+      const addPart = (geo: THREE.BufferGeometry, pos: [number, number, number], rot?: [number, number, number]) => {
+        const mesh = new THREE.Mesh(geo, suitMat);
+        mesh.position.set(pos[0], pos[1], pos[2]);
+        if (rot) mesh.rotation.set(rot[0], rot[1], rot[2]);
+        scene.add(mesh);
+        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat);
+        edges.position.set(pos[0], pos[1], pos[2]);
+        if (rot) edges.rotation.set(rot[0], rot[1], rot[2]);
+        scene.add(edges);
+      };
+      
+      // Torso
+      addPart(new THREE.BoxGeometry(width * 0.85, torsoHeight, partDepth), [0, shoulderY - torsoHeight / 2, 0]);
+      
+      // Head/hood
+      const headGeo = new THREE.SphereGeometry(width * 0.22, 16, 12);
+      const headMesh = new THREE.Mesh(headGeo, suitMat);
+      headMesh.position.y = shoulderY + width * 0.18;
+      scene.add(headMesh);
+      
+      // Sleeves (left and right, horizontal)
+      const sleeveGeo = new THREE.CylinderGeometry(width * 0.12, width * 0.10, sleeveLen, 12);
+      addPart(sleeveGeo, [-(width * 0.425 + sleeveLen / 2), shoulderY - torsoHeight * 0.2, 0], [0, 0, Math.PI / 2]);
+      addPart(sleeveGeo, [width * 0.425 + sleeveLen / 2, shoulderY - torsoHeight * 0.2, 0], [0, 0, Math.PI / 2]);
+      
+      // Legs
+      const legGeo = new THREE.BoxGeometry(width * 0.32, legHeight, partDepth * 0.9);
+      addPart(legGeo, [-width * 0.2, hipY - legHeight / 2, 0]);
+      addPart(legGeo, [width * 0.2, hipY - legHeight / 2, 0]);
+      
+      // Hanger hook at top
+      const hangerGeo = new THREE.TorusGeometry(width * 0.10, 0.4, 8, 20, Math.PI);
+      const hangerMesh = new THREE.Mesh(hangerGeo, new THREE.MeshBasicMaterial({ color: 0x555555 }));
+      hangerMesh.position.y = shoulderY + width * 0.42;
+      scene.add(hangerMesh);
+    } else {
+      scene.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0xC0272D })));
+      scene.add(new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ color: 0xC0272D, transparent: true, opacity: 0.06, side: THREE.DoubleSide })));
+    }
 
     const pad = mx * 0.15;
     const addLine = (start: number[], end: number[], color: number) => {
