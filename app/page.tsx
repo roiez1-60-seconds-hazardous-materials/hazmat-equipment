@@ -55,6 +55,7 @@ export default function Page() {
         cat: "additional", he: "", en: "", qty: null, st: "new",
         notes: "", co: "", dims: { l: "", w: "", h: "", d: "" },
         wt: "", url: "", photos: [], video: null, shape: "box",
+        voltage: "", current: "", power: "", is_electric: false,
       };
       setItems(prev => [...prev, newItem]);
       return newItem;
