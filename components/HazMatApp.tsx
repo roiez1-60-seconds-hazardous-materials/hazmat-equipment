@@ -448,29 +448,29 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
         {/* Sticky Header */}
         <div style={{ 
           position: "sticky", 
-          top: 100, 
+          top: 76, 
           zIndex: 30,
           background: "rgba(250,250,248,0.97)", 
           backdropFilter: "blur(12px)", 
           marginInline: -16,
           marginTop: -20,
-          paddingInline: 16, 
-          paddingBlock: 10,
+          paddingInline: 12, 
+          paddingBlock: 8,
           borderBottom: "2px solid #ECEAE4",
           display: "flex", 
           alignItems: "center", 
-          gap: 10,
+          gap: 8,
         }}>
-          <button onClick={() => { setTab("dash"); setEdit(null); }} style={{ padding: "6px 10px", borderRadius: 10, background: "#fff", border: "2px solid #E5E2DC", cursor: "pointer", fontSize: 18, flexShrink: 0, lineHeight: 1 }}>{lang === "he" ? "→" : "←"}</button>
-          <Ring value={p} size={40} color={c.color} />
+          <button onClick={() => { setTab("dash"); setEdit(null); }} style={{ padding: "4px 10px", borderRadius: 10, background: "#fff", border: "2px solid #E5E2DC", cursor: "pointer", fontSize: 20, flexShrink: 0, lineHeight: 1, fontWeight: 700, color: "#666" }}>{lang === "he" ? "→" : "←"}</button>
+          <Ring value={p} size={36} color={c.color} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2, flexWrap: "wrap" }}>
-              <span style={{ width: 22, height: 22, borderRadius: 6, background: c.bg, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 900, color: c.color, flexShrink: 0 }}>{edit.id}</span>
-              <span style={{ fontSize: 10, fontWeight: 700, color: c.color, background: c.bg, padding: "2px 6px", borderRadius: 6 }}>{c.emoji} {c[lang as "he" | "en"]}</span>
-              {edit.is_electric && <span style={{ fontSize: 10, fontWeight: 700, color: "#E65100", background: "#FFF3E0", padding: "2px 6px", borderRadius: 6 }}>⚡</span>}
-              {edit.st === "new" && <span style={{ fontSize: 10, fontWeight: 700, color: "#92400E", background: "#FEF3C7", padding: "2px 6px", borderRadius: 6 }}>✨</span>}
+            <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2, flexWrap: "wrap" }}>
+              <span style={{ width: 20, height: 20, borderRadius: 5, background: c.bg, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, color: c.color, flexShrink: 0 }}>{edit.id}</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: c.color }}>{c.emoji}</span>
+              {edit.is_electric && <span style={{ fontSize: 10, color: "#E65100" }}>⚡</span>}
+              {edit.st === "new" && <span style={{ fontSize: 10 }}>✨</span>}
             </div>
-            <h2 style={{ fontSize: 13, fontWeight: 900, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{lang === "en" && edit.en ? edit.en : (edit.he || t("פריט חדש", "New Item"))}</h2>
+            <h2 style={{ fontSize: 12, fontWeight: 900, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{lang === "en" && edit.en ? edit.en : (edit.he || t("פריט חדש", "New Item"))}</h2>
           </div>
         </div>
 
@@ -633,21 +633,24 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
   // ═══ RENDER ═══
   return (
     <div dir={lang === "he" ? "rtl" : "ltr"} style={{ minHeight: "100vh", background: "#FAFAF8", fontFamily: "'Heebo',sans-serif", color: "#2D2D2D" }}>
-      <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(255,255,255,0.9)", backdropFilter: "blur(20px)", borderBottom: "2px solid #ECEAE4", padding: "0 16px" }}>
+      <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(255,255,255,0.9)", backdropFilter: "blur(20px)", borderBottom: "2px solid #ECEAE4", padding: "0 12px" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 42, height: 42, borderRadius: 12, background: "linear-gradient(135deg,#C0272D,#8B1A1A)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, boxShadow: "0 3px 10px rgba(192,39,45,0.25)" }}>🚒</div>
-              <div><h1 style={{ fontSize: 14, fontWeight: 900 }}>{t('אפיון ציוד מכולת חומ"ס', "HazMat Equipment Spec")}</h1><p style={{ fontSize: 10, color: "#aaa" }}>{t('כבאות והצלה • ענף חומ"ס • אלמוג', "Fire & Rescue • HazMat")}</p></div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg,#C0272D,#8B1A1A)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>🚒</div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <h1 style={{ fontSize: 12, fontWeight: 900, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t('אפיון ציוד חומ"ס', "HazMat Equipment")}</h1>
+                <p style={{ fontSize: 9, color: "#aaa", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t('כבאות והצלה • אלמוג', "Fire & Rescue • Almog")}</p>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              <button onClick={() => { if (admin) { setAdmin(false); } else { setShowPwDialog(true); setPwInput(""); setPwError(""); } }} style={{ padding: "6px 12px", borderRadius: 8, border: `2px solid ${admin ? "#C0272D" : "#E5E2DC"}`, background: admin ? "#FEF2F2" : "#fff", color: admin ? "#C0272D" : "#999", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>{admin ? "🔓 " + t("עריכה", "Edit") : "🔒"}</button>
-              <button onClick={() => setLang(lang === "he" ? "en" : "he")} style={{ padding: "6px 12px", borderRadius: 8, border: "2px solid #E5E2DC", background: "#fff", fontSize: 12, fontWeight: 800, cursor: "pointer", color: "#666" }}>🌐 {lang === "he" ? "EN" : "עב"}</button>
+            <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+              <button onClick={() => { if (admin) { setAdmin(false); } else { setShowPwDialog(true); setPwInput(""); setPwError(""); } }} style={{ padding: "5px 10px", borderRadius: 8, border: `2px solid ${admin ? "#C0272D" : "#E5E2DC"}`, background: admin ? "#FEF2F2" : "#fff", color: admin ? "#C0272D" : "#999", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>{admin ? "🔓" : "🔒"}</button>
+              <button onClick={() => setLang(lang === "he" ? "en" : "he")} style={{ padding: "5px 10px", borderRadius: 8, border: "2px solid #E5E2DC", background: "#fff", fontSize: 11, fontWeight: 800, cursor: "pointer", color: "#666" }}>🌐{lang === "he" ? "EN" : "עב"}</button>
             </div>
           </div>
           <div style={{ display: "flex", gap: 2, marginBottom: -2 }}>
             {[{ id: "dash", e: "📊", l: t("לוח בקרה", "Dashboard") }, { id: "detail", e: "📝", l: t("פרטי פריט", "Detail") }, { id: "export", e: "📤", l: t("ייצוא", "Export") }].map(tb => (
-              <button key={tb.id} onClick={() => setTab(tb.id)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "8px 16px", borderRadius: "8px 8px 0 0", border: "none", fontSize: 12, fontWeight: 700, cursor: "pointer", borderBottom: `3px solid ${tab === tb.id ? "#C0272D" : "transparent"}`, background: tab === tb.id ? "#fff" : "transparent", color: tab === tb.id ? "#C0272D" : "#999" }}>{tb.e} {tb.l}</button>
+              <button key={tb.id} onClick={() => setTab(tb.id)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", borderRadius: "8px 8px 0 0", border: "none", fontSize: 11, fontWeight: 700, cursor: "pointer", borderBottom: `3px solid ${tab === tb.id ? "#C0272D" : "transparent"}`, background: tab === tb.id ? "#fff" : "transparent", color: tab === tb.id ? "#C0272D" : "#999" }}>{tb.e} {tb.l}</button>
             ))}
           </div>
         </div>
