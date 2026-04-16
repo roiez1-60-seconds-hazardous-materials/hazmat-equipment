@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { EquipmentItem } from "@/lib/types";
 import HazMatApp from "@/components/HazMatApp";
 
@@ -8,27 +8,56 @@ export default function Page() {
   const [items, setItems] = useState<EquipmentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastSync, setLastSync] = useState<Date>(new Date());
+  // Track items that were recently edited locally — don't overwrite with poll
+  const recentlyEdited = useRef<Map<number, number>>(new Map());
 
   // Fetch items from API
-  useEffect(() => {
-    fetch("/api/items")
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setItems(data);
-        } else {
-          setError("Failed to load data");
-        }
-        setLoading(false);
-      })
-      .catch(e => {
+  const fetchItems = async (silent = false) => {
+    try {
+      const r = await fetch("/api/items");
+      const data = await r.json();
+      if (Array.isArray(data)) {
+        const now = Date.now();
+        setItems(prev => {
+          // Merge: for recently-edited items (last 3 sec), keep local version
+          return data.map((serverItem: EquipmentItem) => {
+            const editedAt = recentlyEdited.current.get(serverItem.id);
+            if (editedAt && now - editedAt < 3000) {
+              const localItem = prev.find(i => i.id === serverItem.id);
+              return localItem || serverItem;
+            }
+            return serverItem;
+          });
+        });
+        setLastSync(new Date());
+      } else if (!silent) {
+        setError("Failed to load data");
+      }
+      if (!silent) setLoading(false);
+    } catch (e: any) {
+      if (!silent) {
         setError(e.message);
         setLoading(false);
-      });
+      }
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
+  // Poll every 10 seconds for updates from other users
+  useEffect(() => {
+    const interval = setInterval(() => fetchItems(true), 10000);
+    return () => clearInterval(interval);
   }, []);
 
   // Save item to API
   const saveItem = async (id: number, updates: Partial<EquipmentItem>) => {
+    // Mark as recently edited to prevent poll overwrite
+    recentlyEdited.current.set(id, Date.now());
     setItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
     try {
       await fetch("/api/items", {
