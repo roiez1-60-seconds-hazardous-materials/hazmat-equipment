@@ -10,6 +10,7 @@ export async function GET() {
       notes: row.notes || "", co: row.co || "",
       dims: { l: row.dim_l || "", w: row.dim_w || "", h: row.dim_h || "", d: row.dim_d || "" },
       wt: row.wt || "", url: row.url || "", photos: row.photos || [], video: row.video, shape: row.shape || "box",
+      voltage: row.voltage || "", current: row.current || "", power: row.power || "", is_electric: row.is_electric || false,
     }));
     return NextResponse.json(items);
   } catch (e: any) {
@@ -43,6 +44,8 @@ export async function PUT(req: NextRequest) {
       wt=COALESCE(${b.wt??null},wt), url=COALESCE(${b.url??null},url), shape=COALESCE(${b.shape??null},shape),
       dim_l=COALESCE(${b.dims?.l??null},dim_l), dim_w=COALESCE(${b.dims?.w??null},dim_w),
       dim_h=COALESCE(${b.dims?.h??null},dim_h), dim_d=COALESCE(${b.dims?.d??null},dim_d),
+      voltage=COALESCE(${b.voltage??null},voltage), current=COALESCE(${b.current??null},current),
+      power=COALESCE(${b.power??null},power), is_electric=COALESCE(${b.is_electric??null},is_electric),
       photos=COALESCE(${b.photos?JSON.stringify(b.photos):null}::jsonb,photos),
       video=${b.video!==undefined?(b.video?JSON.stringify(b.video):null):null}::jsonb,
       updated_at=now()

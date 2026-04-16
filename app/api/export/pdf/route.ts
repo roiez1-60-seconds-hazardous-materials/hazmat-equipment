@@ -33,11 +33,14 @@ export async function GET() {
       itemsHtml += `<div class="cat-header" style="background:${color}">${he} — ${en} (${items.length})</div>`;
       itemsHtml += `<table><thead><tr>
         <th>#</th><th>תיאור / Description</th><th>כמות</th>
-        <th>צורה</th><th>מידות (cm)</th><th>משקל</th><th>חברה</th><th>הערות</th>
+        <th>צורה</th><th>מידות (cm)</th><th>משקל</th><th>⚡ חשמל</th><th>חברה</th><th>הערות</th>
       </tr></thead><tbody>`;
       
       for (const r of items) {
         const dims = [r.dim_l && `L:${r.dim_l}`, r.dim_w && `W:${r.dim_w}`, r.dim_h && `H:${r.dim_h}`, r.dim_d && `⌀:${r.dim_d}`].filter(Boolean).join(" × ") || "—";
+        const electric = r.is_electric 
+          ? ([r.voltage && `${r.voltage}V`, r.current && `${r.current}A`, r.power && `${r.power}W`].filter(Boolean).join(" / ") || "⚡")
+          : "—";
         itemsHtml += `<tr>
           <td class="center">${r.id}</td>
           <td><div class="he">${r.he || ""}</div><div class="en">${r.en || ""}</div></td>
@@ -45,6 +48,7 @@ export async function GET() {
           <td class="center">${shapeNames[r.shape] || "—"}</td>
           <td class="mono">${dims}</td>
           <td class="center">${r.wt ? r.wt + " kg" : "—"}</td>
+          <td class="mono center ${r.is_electric ? "elec" : ""}">${electric}</td>
           <td>${r.co || "—"}</td>
           <td class="small">${r.notes || ""}</td>
         </tr>`;
@@ -55,6 +59,8 @@ export async function GET() {
     const totalItems = rows.length;
     const measured = rows.filter((r: any) => r.dim_l || r.dim_d).length;
     const withPhotos = rows.filter((r: any) => (r.photos || []).length > 0).length;
+    const electricItems = rows.filter((r: any) => r.is_electric).length;
+    const electricComplete = rows.filter((r: any) => r.is_electric && r.voltage && (r.current || r.power)).length;
     const date = new Date().toLocaleDateString("he-IL");
 
     const html = `<!DOCTYPE html>
@@ -85,6 +91,7 @@ export async function GET() {
   .he { font-weight: 700; font-size: 11px; line-height: 1.4; }
   .en { font-size: 9px; color: #999; direction: ltr; }
   .small { font-size: 9px; color: #777; }
+  .elec { background: #FFF3E0 !important; color: #E65100; font-weight: 700; }
   
   .footer { margin-top: 30px; padding-top: 12px; border-top: 2px solid #e5e2dc; display: flex; justify-content: space-between; font-size: 10px; color: #bbb; }
   
@@ -106,6 +113,7 @@ export async function GET() {
     <div class="sub">${date}</div>
     <div><span class="stat">📦 ${totalItems} פריטים</span></div>
     <div><span class="stat">📐 ${measured} נמדדו</span> <span class="stat">📸 ${withPhotos} צולמו</span></div>
+    <div><span class="stat">⚡ ${electricComplete}/${electricItems} חשמליים</span></div>
   </div>
 </div>
 

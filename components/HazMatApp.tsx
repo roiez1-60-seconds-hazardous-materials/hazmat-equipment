@@ -414,6 +414,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.4, color: "#2D2D2D", marginBottom: 6 }}>{lang === "en" && item.en ? item.en : item.he}</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                    {item.is_electric && <span className="tag" style={{ background: "#FFF3E0", color: "#E65100" }}>⚡ {item.voltage ? `${item.voltage}V` : t("חשמלי", "Electric")}</span>}
                     {item.qty && <span className="tag" style={{ background: "#f5f5f0", color: "#666" }}>×{item.qty}</span>}
                     {item.wt && <span className="tag" style={{ background: "#E8F5E9", color: "#2E7D32" }}>{item.wt}kg</span>}
                     {item.co && <span className="tag" style={{ background: "#F3E5F5", color: "#6A1B9A" }}>{item.co}</span>}
@@ -500,6 +501,51 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
               return (<div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: "#f8f7f4", borderRadius: 10, fontSize: 12, color: "#777" }}><span>📦 {t("נפח", "Vol")}: <b style={{ color: "#2D2D2D" }}>{vol.toFixed(1)} L</b></span>{edit.wt && <span>⚖️ <b style={{ color: "#2D2D2D" }}>{(parseFloat(edit.wt) / (vol / 1000)).toFixed(0)} kg/m³</b></span>}</div>);
             })()}
           </div>
+        </div>
+
+        {/* Electrical specs */}
+        <div className="sec">
+          <div style={{ padding: "14px 18px", borderBottom: "2px solid #f5f3ef", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 style={{ fontSize: 14, fontWeight: 800 }}>⚡ {t("מפרט חשמלי", "Electrical Specs")}</h3>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 11, fontWeight: 700, color: edit.is_electric ? "#E65100" : "#aaa" }}>
+              <input type="checkbox" checked={edit.is_electric || false} onChange={e => sv("is_electric", e.target.checked)}
+                style={{ width: 18, height: 18, cursor: "pointer", accentColor: "#E65100" }} />
+              {t("צרכן חשמל", "Powered")}
+            </label>
+          </div>
+          {edit.is_electric && (
+            <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                <div>
+                  <label className="lbl"><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#E65100", marginInlineEnd: 4 }} />{t("מתח", "Voltage")} (V)</label>
+                  <input type="text" inputMode="decimal" value={edit.voltage || ""} onChange={e => sv("voltage", e.target.value)} className="inp" placeholder="230" style={{ textAlign: "center", fontFamily: "monospace" }} />
+                </div>
+                <div>
+                  <label className="lbl"><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#FFC107", marginInlineEnd: 4 }} />{t("זרם", "Current")} (A)</label>
+                  <input type="text" inputMode="decimal" value={edit.current || ""} onChange={e => sv("current", e.target.value)} className="inp" placeholder="10" style={{ textAlign: "center", fontFamily: "monospace" }} />
+                </div>
+                <div>
+                  <label className="lbl"><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#9C27B0", marginInlineEnd: 4 }} />{t("הספק", "Power")} (W)</label>
+                  <input type="text" inputMode="decimal" value={edit.power || ""} onChange={e => sv("power", e.target.value)} className="inp" placeholder="2300" style={{ textAlign: "center", fontFamily: "monospace" }} />
+                </div>
+              </div>
+              {(() => {
+                const v = parseFloat(edit.voltage || "0");
+                const a = parseFloat(edit.current || "0");
+                const w = parseFloat(edit.power || "0");
+                if (v && a && !w) {
+                  return <div style={{ padding: "10px 14px", background: "#FFF3E0", borderRadius: 10, fontSize: 12, color: "#E65100", display: "flex", alignItems: "center", gap: 8 }}>💡 {t("הספק מחושב:", "Calculated power:")} <b>{(v * a).toFixed(0)} W</b></div>;
+                }
+                if (v && w && !a) {
+                  return <div style={{ padding: "10px 14px", background: "#FFF3E0", borderRadius: 10, fontSize: 12, color: "#E65100", display: "flex", alignItems: "center", gap: 8 }}>💡 {t("זרם מחושב:", "Calculated current:")} <b>{(w / v).toFixed(2)} A</b></div>;
+                }
+                return null;
+              })()}
+              <div style={{ fontSize: 11, color: "#999", padding: "8px 12px", background: "#fafaf8", borderRadius: 8 }}>
+                💡 {t("חובה מילוי עבור ציוד חשמלי — נדרש לצורך תכנון המכולה", "Required for electric equipment — needed for container electrical planning")}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 3D View */}

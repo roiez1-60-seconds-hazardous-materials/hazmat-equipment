@@ -15,7 +15,8 @@ export async function GET() {
       "מספר", "קטגוריה", "תיאור עברית", "English Description",
       "כמות", "סטטוס", "הערות", "חברה", "צורה",
       "אורך (cm)", "רוחב (cm)", "גובה (cm)", "קוטר (cm)",
-      "משקל (kg)", "קישור יצרן", "מספר תמונות", "סרטון"
+      "משקל (kg)", "צרכן חשמל", "מתח (V)", "זרם (A)", "הספק (W)",
+      "קישור יצרן", "מספר תמונות", "סרטון"
     ];
 
     const catNames: Record<string, string> = {
@@ -52,6 +53,10 @@ export async function GET() {
         r.dim_h || "",
         r.dim_d || "",
         r.wt || "",
+        r.is_electric ? "✓" : "",
+        r.voltage || "",
+        r.current || "",
+        r.power || "",
         r.url || "",
         photos.length,
         r.video ? "✓" : "",

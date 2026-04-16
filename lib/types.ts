@@ -36,6 +36,11 @@ export interface EquipmentItem {
   photos: PhotoItem[];
   video: VideoItem | null;
   shape: Shape;
+  // Electrical specs (for powered equipment)
+  voltage: string;  // V
+  current: string;  // A
+  power: string;    // W
+  is_electric: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -100,12 +105,17 @@ export const PHOTO_ANGLES = [
 // Compute completion percentage — only measurement fields
 export function calcCompletion(item: EquipmentItem): number {
   let filled = 0;
-  const total = 4;
+  let total = 4;
   const shape = SHAPES.find(s => s.id === item.shape) || SHAPES[0];
   if (shape.fields.every(f => item.dims[f as keyof Dims])) filled++;
   if (item.wt) filled++;
   if (item.photos.length > 0) filled++;
   if (item.video) filled++;
+  // Electric items need voltage + (current or power)
+  if (item.is_electric) {
+    total += 1;
+    if (item.voltage && (item.current || item.power)) filled++;
+  }
   return Math.round((filled / total) * 100);
 }
 
