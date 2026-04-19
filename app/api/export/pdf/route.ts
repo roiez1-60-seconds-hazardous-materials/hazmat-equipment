@@ -156,7 +156,13 @@ export async function GET(req: NextRequest) {
           elecHtml = `<div class="field elec-field"><span class="field-label">⚡ ${tr("electric")}</span><span class="field-value">${parts || "—"}</span></div>`;
         }
 
-        itemsHtml += `
+          const unitWt = parseFloat(r.wt) || 0;
+          const qty = r.qty || 1;
+          const totalWt = unitWt * qty;
+          const wtLabel = isEn ? "Unit Weight" : "משקל יחידה";
+          const totalWtLabel = isEn ? "Total Weight" : "משקל כולל";
+
+          itemsHtml += `
         <div class="item-card">
           <div class="item-header">
             <span class="item-id" style="background:${color}">${++itemNum}</span>
@@ -170,8 +176,9 @@ export async function GET(req: NextRequest) {
             <div class="field"><span class="field-label">📐 ${tr("shape")}</span><span class="field-value">${shapeLbl}</span></div>
             <div class="field"><span class="field-label">📏 ${tr("dims")} (cm)</span><span class="field-value mono">${dims}</span></div>
             <div class="field"><span class="field-label">📦 ${tr("volume")}</span><span class="field-value mono">${vol}</span></div>
-            <div class="field"><span class="field-label">⚖️ ${tr("weight")}</span><span class="field-value mono">${r.wt ? r.wt + " kg" : "—"}</span></div>
-            <div class="field"><span class="field-label">🔢 ${tr("qty")}</span><span class="field-value">${r.qty || "—"}</span></div>
+            <div class="field"><span class="field-label">⚖️ ${wtLabel}</span><span class="field-value mono">${unitWt ? unitWt + " kg" : "—"}</span></div>
+            <div class="field"><span class="field-label">🔢 ${tr("qty")}</span><span class="field-value">${qty}</span></div>
+            <div class="field" style="${qty > 1 && unitWt ? 'background:#E8F5E9' : ''}"><span class="field-label">⚖️ ${totalWtLabel}</span><span class="field-value mono" style="${qty > 1 && unitWt ? 'color:#2E7D32;font-size:20px' : ''}">${unitWt ? totalWt.toFixed(1) + " kg" : "—"}</span></div>
             <div class="field"><span class="field-label">🏭 ${tr("company")}</span><span class="field-value">${r.co || "—"}</span></div>
             ${elecHtml}
             <div class="field"><span class="field-label">📸 ${tr("photosLbl")}</span><span class="field-value">${photoCount > 0 ? photoCount : "—"}</span></div>
