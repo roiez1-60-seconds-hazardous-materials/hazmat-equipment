@@ -747,7 +747,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
           </div>
           <div style={{ display: "flex", gap: 2, marginBottom: -2 }}>
             {[{ id: "dash", e: "📊", l: t("לוח בקרה", "Dashboard") }, { id: "detail", e: "📝", l: t("פרטי פריט", "Detail") }, { id: "export", e: "📤", l: t("ייצוא", "Export") }].map(tb => (
-              <button key={tb.id} onClick={() => setTab(tb.id)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", borderRadius: "8px 8px 0 0", border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer", borderBottom: `3px solid ${tab === tb.id ? "#C0272D" : "transparent"}`, background: tab === tb.id ? "#fff" : "transparent", color: tab === tb.id ? "#C0272D" : "#999" }}>{tb.e} {tb.l}</button>
+              <button key={tb.id} onClick={() => { if (tb.id === "detail" && !edit && shown.length) { setEdit({ ...shown[0] }); } setTab(tb.id); }} style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", borderRadius: "8px 8px 0 0", border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer", borderBottom: `3px solid ${tab === tb.id ? "#C0272D" : "transparent"}`, background: tab === tb.id ? "#fff" : "transparent", color: tab === tb.id ? "#C0272D" : "#999" }}>{tb.e} {tb.l}</button>
             ))}
           </div>
         </div>
