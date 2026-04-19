@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import * as THREE from "three";
 import {
   EquipmentItem, CATEGORIES, SHAPES, DIM_LABELS, PHOTO_ANGLES,
-  calcCompletion, calcVolume, Category, Shape,
+  calcVolume, Category, Shape,
 } from "@/lib/types";
 
 interface Props {
@@ -15,20 +15,6 @@ interface Props {
 }
 
 // ─── PROGRESS RING ───
-function Ring({ value, size = 48, color = "#C0272D" }: { value: number; size?: number; color?: string }) {
-  const s = 4, r = (size - s) / 2, circ = 2 * Math.PI * r, off = circ - (value / 100) * circ;
-  const done = value === 100;
-  return (
-    <svg width={size} height={size} style={{ transform: "rotate(-90deg)", flexShrink: 0 }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#eee" strokeWidth={s} />
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={done ? "#2E7D32" : color} strokeWidth={s}
-        strokeDasharray={circ} strokeDashoffset={off} strokeLinecap="round"
-        style={{ transition: "stroke-dashoffset 0.8s ease" }} />
-      <text x={size / 2} y={size / 2} textAnchor="middle" dominantBaseline="central"
-        style={{ fontSize: size < 42 ? 9 : 11, fontWeight: 900, fill: done ? "#2E7D32" : "#555", transform: "rotate(90deg)", transformOrigin: "center" }}>{value}%</text>
-    </svg>
-  );
-}
 
 // ─── 3D SHAPE VIEWER ───
 function ShapeViewer({ dims, shape }: { dims: EquipmentItem["dims"]; shape: Shape }) {
@@ -304,12 +290,19 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
     return true;
   }).sort((a, b) => CAT_ORDER.indexOf(a.cat) - CAT_ORDER.indexOf(b.cat));
 
+  // Sequential display numbers (1,2,3...) sorted by category
+  const displayNum = useMemo(() => {
+    const sorted = [...items].sort((a, b) => CAT_ORDER.indexOf(a.cat) - CAT_ORDER.indexOf(b.cat));
+    const map: Record<number, number> = {};
+    sorted.forEach((item, i) => { map[item.id] = i + 1; });
+    return map;
+  }, [items]);
+
   const stats = useMemo(() => ({
     total: items.length,
-    done: items.filter(i => calcCompletion(i) === 100).length,
     meas: items.filter(i => { const shp = SHAPES.find(s => s.id === i.shape) || SHAPES[0]; return shp.fields.every(fld => (i.dims as any)[fld]); }).length,
     pics: items.filter(i => i.photos.length > 0).length,
-    avg: items.length ? Math.round(items.reduce((s, i) => s + calcCompletion(i), 0) / items.length) : 0,
+    elec: items.filter(i => i.is_electric).length,
   }), [items]);
 
   const openItem = (item: EquipmentItem) => { dashScrollRef.current = window.scrollY; setEdit({ ...item }); setTab("detail"); };
@@ -414,10 +407,9 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px,1fr))", gap: 12 }}>
         {[
           { e: "📦", l: t("סה״כ", "Total"), v: stats.total, c: "#C0272D" },
-          { e: "✅", l: t("הושלמו", "Done"), v: stats.done, c: "#2E7D32" },
           { e: "📐", l: t("נמדדו", "Measured"), v: stats.meas, c: "#1565C0" },
           { e: "📸", l: t("צולמו", "Photos"), v: stats.pics, c: "#E65100" },
-          { e: "📊", l: t("השלמה", "Avg%"), v: `${stats.avg}%`, c: "#6A1B9A" },
+          { e: "⚡", l: t("חשמליים", "Electric"), v: stats.elec, c: "#0277BD" },
         ].map((s, i) => (
           <div key={i} style={{ padding: 18, borderRadius: 14, border: "2px solid #ECEAE4", background: "#fff" }}>
             <div style={{ fontSize: 24, marginBottom: 4 }}>{s.e}</div>
@@ -427,20 +419,17 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
         ))}
       </div>
 
-      {/* Category progress */}
+      {/* Category summary */}
       <div className="sec" style={{ padding: 20 }}>
-        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 14 }}>{t("התקדמות לפי קטגוריה", "Progress by Category")}</div>
+        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 14 }}>{t("סיכום לפי קטגוריה", "Summary by Category")}</div>
         {Object.entries(CATEGORIES).map(([k, c]) => {
           const ci = items.filter(i => i.cat === k);
-          const avg = ci.length ? Math.round(ci.reduce((s, i) => s + calcCompletion(i), 0) / ci.length) : 0;
+          if (!ci.length) return null;
           return (
             <div key={k} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
               <span style={{ fontSize: 18, width: 28, textAlign: "center" }}>{c.emoji}</span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#555", width: 80 }}>{c[lang as "he" | "en"]}</span>
-              <div style={{ flex: 1, height: 8, background: "#f0efeb", borderRadius: 4, overflow: "hidden" }}>
-                <div style={{ height: "100%", borderRadius: 4, width: `${avg}%`, background: c.color, transition: "width 0.8s" }} />
-              </div>
-              <span style={{ fontSize: 13, fontWeight: 900, width: 40, textAlign: "left" as const, color: c.color }}>{avg}%</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#555", flex: 1 }}>{c[lang as "he" | "en"]}</span>
+              <span style={{ fontSize: 15, fontWeight: 900, color: c.color }}>{ci.length} {t("פריטים", "items")}</span>
             </div>
           );
         })}
@@ -468,7 +457,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
       {(() => {
         let lastCat = "";
         return shown.map(item => {
-          const p = calcCompletion(item), c = CATEGORIES[item.cat];
+          const c = CATEGORIES[item.cat];
           const showHeader = item.cat !== lastCat;
           lastCat = item.cat;
           return (
@@ -485,7 +474,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
                   onClick={e => { e.stopPropagation(); setDelModal(item.id); }}>🗑️</button>}
                 <div style={{ height: 4, background: `linear-gradient(90deg, ${c.color}, ${c.color}88)` }} />
                 <div style={{ padding: 16, display: "flex", gap: 12 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: 10, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: c.color, flexShrink: 0 }}>{item.id}</div>
+                  <div style={{ width: 42, height: 42, borderRadius: 10, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: c.color, flexShrink: 0 }}>{displayNum[item.id] || item.id}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 800, lineHeight: 1.4, color: "#2D2D2D", marginBottom: 6 }}>{lang === "en" && item.en ? item.en : item.he}</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
@@ -495,7 +484,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
                       {item.co && <span className="tag" style={{ background: "#F3E5F5", color: "#6A1B9A" }}>{item.co}</span>}
                     </div>
                   </div>
-                  <Ring value={p} size={44} color={c.color} />
+                  
                 </div>
               </div>
             </div>
@@ -514,7 +503,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
   // ═══ DETAIL ═══
   const Detail = () => {
     if (!edit) return <div style={{ textAlign: "center", padding: 80, color: "#bbb" }}><div style={{ fontSize: 48 }}>📋</div><p>{t("בחר פריט", "Select item")}</p></div>;
-    const c = CATEGORIES[edit.cat], p = calcCompletion(edit);
+    const c = CATEGORIES[edit.cat];
     const shp = SHAPES.find(s => s.id === edit.shape) || SHAPES[0];
     const dimsOk = shp.fields.every(fld => (edit.dims as any)[fld]);
 
@@ -537,10 +526,10 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
           gap: 8,
         }}>
           <button onClick={() => { setTab("dash"); setEdit(null); setTimeout(() => window.scrollTo({ top: dashScrollRef.current }), 50); }} style={{ padding: "4px 10px", borderRadius: 10, background: "#fff", border: "2px solid #E5E2DC", cursor: "pointer", fontSize: 20, flexShrink: 0, lineHeight: 1, fontWeight: 700, color: "#666" }}>{lang === "he" ? "→" : "←"}</button>
-          <Ring value={p} size={36} color={c.color} />
+          
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2, flexWrap: "wrap" }}>
-              <span style={{ width: 20, height: 20, borderRadius: 5, background: c.bg, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, color: c.color, flexShrink: 0 }}>{edit.id}</span>
+              <span style={{ width: 22, height: 22, borderRadius: 6, background: c.bg, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: c.color, flexShrink: 0 }}>{displayNum[edit.id] || edit.id}</span>
               <span style={{ fontSize: 10, fontWeight: 700, color: c.color }}>{c.emoji}</span>
               {edit.is_electric && <span style={{ fontSize: 10, color: "#E65100" }}>⚡</span>}
               {edit.st === "new" && <span style={{ fontSize: 10 }}>✨</span>}

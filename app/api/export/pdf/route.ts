@@ -130,6 +130,7 @@ export async function GET(req: NextRequest) {
 
     // Build item cards — sorted by category order
     let itemsHtml = "";
+    let itemNum = 0;
     for (const catKey of CAT_ORDER) {
       const items = groups[catKey];
       if (!items || !items.length) continue;
@@ -158,7 +159,7 @@ export async function GET(req: NextRequest) {
         itemsHtml += `
         <div class="item-card">
           <div class="item-header">
-            <span class="item-id" style="background:${color}">${r.id}</span>
+            <span class="item-id" style="background:${color}">${++itemNum}</span>
             <div class="item-title">
               <div class="item-name">${name}</div>
               ${nameSec ? `<div class="item-name-sec">${nameSec}</div>` : ""}
