@@ -1,6 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 
+const GEMINI_KEY = "AIzaSyCbdnQ8_EVWzCHRbe9UsTY0P3BT8zTVCps";
+
+// Translate Hebrew texts to English via Gemini
+async function translateBatch(texts: string[]): Promise<string[]> {
+  if (!texts.length) return [];
+  try {
+    const prompt = `Translate each Hebrew line to English. Return ONLY the translations, one per line, same order. No numbering, no explanations.\n\n${texts.map((t, i) => `${i + 1}. ${t}`).join("\n")}`;
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 4000 },
+        }),
+      }
+    );
+    const data = await res.json();
+    const output = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const lines = output.trim().split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").trim());
+    // Pad or trim to match input length
+    while (lines.length < texts.length) lines.push(texts[lines.length]);
+    return lines.slice(0, texts.length);
+  } catch (e) {
+    console.error("Translation error:", e);
+    return texts; // fallback to original
+  }
+}
+
 // GET /api/export/pdf?lang=he|en
 export async function GET(req: NextRequest) {
   try {
@@ -88,6 +118,23 @@ export async function GET(req: NextRequest) {
     const totalWeight = rows.reduce((sum: number, r: any) => sum + (parseFloat(r.wt) || 0) * (r.qty || 1), 0);
     const date = new Date().toLocaleDateString(isEn ? "en-US" : "he-IL");
 
+    // Auto-translate Hebrew texts for English report
+    const translations: Record<number, { name: string; notes: string }> = {};
+    if (isEn) {
+      const toTranslate: { id: number; field: "name" | "notes"; text: string }[] = [];
+      rows.forEach((r: any) => {
+        if ((!r.en || !r.en.trim()) && r.he) toTranslate.push({ id: r.id, field: "name", text: r.he });
+        if (r.notes && r.notes.trim()) toTranslate.push({ id: r.id, field: "notes", text: r.notes });
+      });
+      if (toTranslate.length > 0) {
+        const translated = await translateBatch(toTranslate.map(t => t.text));
+        toTranslate.forEach((t, i) => {
+          if (!translations[t.id]) translations[t.id] = { name: "", notes: "" };
+          translations[t.id][t.field] = translated[i] || t.text;
+        });
+      }
+    }
+
     // Build item cards
     let itemsHtml = "";
     for (const [cat, items] of Object.entries(groups)) {
@@ -96,8 +143,10 @@ export async function GET(req: NextRequest) {
       itemsHtml += `<div class="cat-header" style="background:${color}">${catLabel} (${items.length})</div>`;
 
       for (const r of items) {
-        const name = isEn ? (r.en || r.he || "") : (r.he || "");
-        const nameSec = isEn ? "" : (r.en || ""); // Don't show Hebrew under English title
+        const trans = translations[r.id];
+        const name = isEn ? (r.en || trans?.name || r.he || "") : (r.he || "");
+        const nameSec = isEn ? "" : (r.en || "");
+        const notesText = isEn ? (trans?.notes || r.notes || "") : (r.notes || "");
         const shapeLbl = shapeNames[r.shape] ? shapeNames[r.shape][isEn ? 1 : 0] : "—";
         const statusLbl = statusNames[r.st] ? statusNames[r.st][isEn ? 1 : 0] : r.st;
         const dims = [r.dim_l && `L: ${r.dim_l}`, r.dim_w && `W: ${r.dim_w}`, r.dim_h && `H: ${r.dim_h}`, r.dim_d && `⌀: ${r.dim_d}`].filter(Boolean).join(" × ") || "—";
@@ -133,7 +182,7 @@ export async function GET(req: NextRequest) {
             <div class="field"><span class="field-label">🎬 ${tr("videoLbl")}</span><span class="field-value">${hasVideo ? "✅" : "—"}</span></div>
           </div>
           ${r.url ? `<div class="item-url"><span class="field-label">🔗 ${tr("url")}</span><a href="${r.url}" target="_blank">${r.url}</a></div>` : ""}
-          ${r.notes ? `<div class="item-notes"><span class="field-label">📝 ${tr("notes")}</span><span>${r.notes}</span></div>` : ""}
+          ${notesText ? `<div class="item-notes"><span class="field-label">📝 ${tr("notes")}</span><span>${notesText}</span></div>` : ""}
         </div>`;
       }
     }
