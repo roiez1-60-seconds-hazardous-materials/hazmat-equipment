@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
       stabilization: ["ציוד ייצוב",   "Stabilization"],
       containment:   ["הכלת אירוע",   "Containment"],
       monitoring:    ["ציוד ניטור",    "Monitoring"],
+      command:       ["ציוד שליטה",    "Command & Control"],
       additional:    ["ציוד נוסף",     "Additional"],
     };
 
