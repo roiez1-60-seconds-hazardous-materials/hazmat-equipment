@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     const catNames: Record<string, [string, string]> = {
       protection:    ["ציוד מיגון",   "Protection"],
       stabilization: ["ציוד ייצוב",   "Stabilization"],
-      containment:   ["הכלת אירוע",   "Containment"],
+      containment:   ["ציוד הכלת אירוע", "Containment"],
       monitoring:    ["ציוד ניטור",    "Monitoring"],
       command:       ["ציוד שליטה",    "Command & Control"],
       washing:       ["ציוד שטיפה",    "Decon / Washing"],

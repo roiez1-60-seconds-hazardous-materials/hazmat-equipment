@@ -72,7 +72,7 @@ export interface DimLabel {
 export const CATEGORIES: Record<Category, CategoryDef> = {
   protection:    { he: "ציוד מיגון",   en: "Protection",    emoji: "🛡️", color: "#C0272D", bg: "#FEF2F2" },
   stabilization: { he: "ציוד ייצוב",   en: "Stabilization", emoji: "💧", color: "#1565C0", bg: "#E3F2FD" },
-  containment:   { he: "הכלת אירוע",   en: "Containment",   emoji: "🔧", color: "#E65100", bg: "#FFF3E0" },
+  containment:   { he: "ציוד הכלת אירוע", en: "Containment",   emoji: "🔧", color: "#E65100", bg: "#FFF3E0" },
   monitoring:    { he: "ציוד ניטור",    en: "Monitoring",    emoji: "📡", color: "#2E7D32", bg: "#E8F5E9" },
   command:       { he: "ציוד שליטה",    en: "Command & Control", emoji: "🎯", color: "#0277BD", bg: "#E1F5FE" },
   washing:       { he: "ציוד שטיפה",    en: "Decon / Washing",   emoji: "🚿", color: "#00838F", bg: "#E0F7FA" },
