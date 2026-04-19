@@ -1,42 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 
-const GEMINI_KEY = "AIzaSyCbdnQ8_EVWzCHRbe9UsTY0P3BT8zTVCps";
-
-// Translate Hebrew texts to English via Gemini
-async function translateBatch(texts: string[]): Promise<string[]> {
-  if (!texts.length) return [];
+// Translate text from Hebrew to English via free Google Translate
+async function translateText(text: string): Promise<string> {
+  if (!text || !text.trim()) return "";
   try {
-    const prompt = `Translate each of the following Hebrew lines to English. Return ONLY the English translations, one per line, in the same order. No numbering, no extra text.\n\n${texts.map((t, i) => `${i + 1}. ${t}`).join("\n")}`;
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 4000 },
-        }),
-      }
-    );
-    if (!res.ok) {
-      console.error("Gemini API error:", res.status, await res.text());
-      return texts;
-    }
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=he&tl=en&dt=t&q=${encodeURIComponent(text)}`;
+    const res = await fetch(url);
     const data = await res.json();
-    const output = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    if (!output) {
-      console.error("Gemini returned empty:", JSON.stringify(data).substring(0, 500));
-      return texts;
-    }
-    const lines = output.trim().split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").trim()).filter((l: string) => l);
-    while (lines.length < texts.length) lines.push(texts[lines.length]);
-    return lines.slice(0, texts.length);
-  } catch (e) {
-    console.error("Translation failed:", e);
-    return texts;
+    // Response format: [[["translated","original",null,null,10]],null,"he",...]
+    return data?.[0]?.map((s: any) => s[0]).join("") || text;
+  } catch {
+    return text;
   }
 }
+
+// Batch translate array of Hebrew strings
+async function translateAll(texts: string[]): Promise<string[]> {
+  // Translate all in parallel (max ~50 items, each is fast)
+  return Promise.all(texts.map(t => translateText(t)));
+}
+
+// Category display order
+const CAT_ORDER = ["protection", "stabilization", "containment", "monitoring", "command", "washing", "additional"];
 
 // GET /api/export/pdf?lang=he|en
 export async function GET(req: NextRequest) {
@@ -134,7 +120,7 @@ export async function GET(req: NextRequest) {
         if (r.notes && r.notes.trim()) toTranslate.push({ id: r.id, field: "notes", text: r.notes });
       });
       if (toTranslate.length > 0) {
-        const translated = await translateBatch(toTranslate.map(t => t.text));
+        const translated = await translateAll(toTranslate.map(t => t.text));
         toTranslate.forEach((t, i) => {
           if (!translations[t.id]) translations[t.id] = { name: "", notes: "" };
           translations[t.id][t.field] = translated[i] || t.text;
@@ -142,10 +128,12 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Build item cards
+    // Build item cards — sorted by category order
     let itemsHtml = "";
-    for (const [cat, items] of Object.entries(groups)) {
-      const [he, en, color] = catNames[cat] || [cat, cat, "#666"];
+    for (const catKey of CAT_ORDER) {
+      const items = groups[catKey];
+      if (!items || !items.length) continue;
+      const [he, en, color] = catNames[catKey] || [catKey, catKey, "#666"];
       const catLabel = isEn ? en : he;
       itemsHtml += `<div class="cat-header" style="background:${color}">${catLabel} (${items.length})</div>`;
 
