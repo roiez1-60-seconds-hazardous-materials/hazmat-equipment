@@ -296,11 +296,13 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
     }
   }, [tab]);
 
+  const CAT_ORDER: string[] = ["protection", "stabilization", "containment", "monitoring", "command", "washing", "additional"];
+
   const shown = items.filter(i => {
     if (filter !== "all" && i.cat !== filter) return false;
     if (q) { const s = q.toLowerCase(); return i.he.includes(s) || (i.en || "").toLowerCase().includes(s) || (i.co || "").toLowerCase().includes(s); }
     return true;
-  });
+  }).sort((a, b) => CAT_ORDER.indexOf(a.cat) - CAT_ORDER.indexOf(b.cat));
 
   const stats = useMemo(() => ({
     total: items.length,
@@ -427,7 +429,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
 
       {/* Category progress */}
       <div className="sec" style={{ padding: 20 }}>
-        <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 14 }}>{t("התקדמות לפי קטגוריה", "Progress by Category")}</div>
+        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 14 }}>{t("התקדמות לפי קטגוריה", "Progress by Category")}</div>
         {Object.entries(CATEGORIES).map(([k, c]) => {
           const ci = items.filter(i => i.cat === k);
           const avg = ci.length ? Math.round(ci.reduce((s, i) => s + calcCompletion(i), 0) / ci.length) : 0;
@@ -462,36 +464,44 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
         </div>
       </div>
 
-      {/* Items grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px,1fr))", gap: 12 }}>
-        {shown.map(item => {
+      {/* Items grid — grouped by category */}
+      {(() => {
+        let lastCat = "";
+        return shown.map(item => {
           const p = calcCompletion(item), c = CATEGORIES[item.cat];
+          const showHeader = item.cat !== lastCat;
+          lastCat = item.cat;
           return (
-            <div key={item.id} className="card" onClick={() => openItem(item)} style={{ position: "relative" }}>
-              {admin && <button style={{ position: "absolute", top: 8, left: 8, zIndex: 5, width: 30, height: 30, borderRadius: "50%", background: "#fee2e2", border: "2px solid #fca5a5", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 14 }}
-                onClick={e => { e.stopPropagation(); setDelModal(item.id); }}>🗑️</button>}
-              <div style={{ height: 4, background: `linear-gradient(90deg, ${c.color}, ${c.color}88)` }} />
-              <div style={{ padding: 16, display: "flex", gap: 12 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 900, color: c.color, flexShrink: 0 }}>{item.id}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: c.color }}>{c.emoji} {c[lang as "he" | "en"]}</span>
-                    {item.st === "new" && <span className="tag" style={{ background: "#FEF3C7", color: "#92400E" }}>✨ {t("חדש", "New")}</span>}
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.4, color: "#2D2D2D", marginBottom: 6 }}>{lang === "en" && item.en ? item.en : item.he}</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                    {item.is_electric && <span className="tag" style={{ background: "#FFF3E0", color: "#E65100" }}>⚡ {item.voltage ? `${item.voltage}V` : t("חשמלי", "Electric")}</span>}
-                    {item.qty && <span className="tag" style={{ background: "#f5f5f0", color: "#666" }}>×{item.qty}</span>}
-                    {item.wt && <span className="tag" style={{ background: "#E8F5E9", color: "#2E7D32" }}>{item.wt}kg</span>}
-                    {item.co && <span className="tag" style={{ background: "#F3E5F5", color: "#6A1B9A" }}>{item.co}</span>}
-                  </div>
+            <div key={item.id}>
+              {showHeader && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "16px 0 8px", padding: "8px 14px", background: c.bg, borderRadius: 10, borderRight: `4px solid ${c.color}` }}>
+                  <span style={{ fontSize: 18 }}>{c.emoji}</span>
+                  <span style={{ fontSize: 15, fontWeight: 900, color: c.color }}>{c[lang as "he" | "en"]}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: c.color, opacity: 0.6, marginInlineStart: "auto" }}>({items.filter(i => i.cat === item.cat).length})</span>
                 </div>
-                <Ring value={p} size={44} color={c.color} />
+              )}
+              <div className="card" onClick={() => openItem(item)} style={{ position: "relative" }}>
+                {admin && <button style={{ position: "absolute", top: 8, left: 8, zIndex: 5, width: 30, height: 30, borderRadius: "50%", background: "#fee2e2", border: "2px solid #fca5a5", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 14 }}
+                  onClick={e => { e.stopPropagation(); setDelModal(item.id); }}>🗑️</button>}
+                <div style={{ height: 4, background: `linear-gradient(90deg, ${c.color}, ${c.color}88)` }} />
+                <div style={{ padding: 16, display: "flex", gap: 12 }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 10, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: c.color, flexShrink: 0 }}>{item.id}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, lineHeight: 1.4, color: "#2D2D2D", marginBottom: 6 }}>{lang === "en" && item.en ? item.en : item.he}</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                      {item.is_electric && <span className="tag" style={{ background: "#FFF3E0", color: "#E65100" }}>⚡ {item.voltage ? `${item.voltage}V` : t("חשמלי", "Electric")}</span>}
+                      {item.qty && <span className="tag" style={{ background: "#f5f5f0", color: "#666" }}>×{item.qty}</span>}
+                      {item.wt && <span className="tag" style={{ background: "#E8F5E9", color: "#2E7D32" }}>{item.wt}kg</span>}
+                      {item.co && <span className="tag" style={{ background: "#F3E5F5", color: "#6A1B9A" }}>{item.co}</span>}
+                    </div>
+                  </div>
+                  <Ring value={p} size={44} color={c.color} />
+                </div>
               </div>
             </div>
           );
-        })}
-      </div>
+        });
+      })()}
 
       <button onClick={handleAdd} style={{
         width: "100%", padding: 20, borderRadius: 16, border: "3px dashed #d5d2cc",
@@ -535,13 +545,13 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
               {edit.is_electric && <span style={{ fontSize: 10, color: "#E65100" }}>⚡</span>}
               {edit.st === "new" && <span style={{ fontSize: 10 }}>✨</span>}
             </div>
-            <h2 style={{ fontSize: 12, fontWeight: 900, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{lang === "en" && edit.en ? edit.en : (edit.he || t("פריט חדש", "New Item"))}</h2>
+            <h2 style={{ fontSize: 14, fontWeight: 900, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{lang === "en" && edit.en ? edit.en : (edit.he || t("פריט חדש", "New Item"))}</h2>
           </div>
         </div>
 
         {/* Details */}
         <div className="sec">
-          <div style={{ padding: "14px 18px", borderBottom: "2px solid #f5f3ef" }}><h3 style={{ fontSize: 14, fontWeight: 800 }}>📝 {t("פרטי הפריט", "Item Details")}</h3></div>
+          <div style={{ padding: "14px 18px", borderBottom: "2px solid #f5f3ef" }}><h3 style={{ fontSize: 16, fontWeight: 800 }}>📝 {t("פרטי הפריט", "Item Details")}</h3></div>
           <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
             <div><label className="lbl">{t("תיאור עברית *", "Hebrew *")}</label><textarea value={edit.he} onChange={e => sv("he", e.target.value)} rows={3} className="inp" style={{ resize: "vertical" }} /></div>
             <div><label className="lbl">{t("תיאור אנגלית", "English")}</label><textarea value={edit.en || ""} onChange={e => sv("en", e.target.value)} rows={2} className="inp" style={{ resize: "vertical", direction: "ltr", textAlign: "left" as const }} /></div>
@@ -560,7 +570,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
 
         {/* Dimensions */}
         <div className="sec">
-          <div style={{ padding: "14px 18px", borderBottom: "2px solid #f5f3ef" }}><h3 style={{ fontSize: 14, fontWeight: 800 }}>📐 {t("מידות ומשקל", "Dimensions")}</h3></div>
+          <div style={{ padding: "14px 18px", borderBottom: "2px solid #f5f3ef" }}><h3 style={{ fontSize: 16, fontWeight: 800 }}>📐 {t("מידות ומשקל", "Dimensions")}</h3></div>
           <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
             <div><label className="lbl">{t("צורת הפריט", "Shape")}</label>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -577,7 +587,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
             {(() => {
               const vol = calcVolume(edit);
               if (vol === null) return null;
-              return (<div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: "#f8f7f4", borderRadius: 10, fontSize: 12, color: "#777" }}><span>📦 {t("נפח", "Vol")}: <b style={{ color: "#2D2D2D" }}>{vol.toFixed(1)} L</b></span>{edit.wt && <span>⚖️ <b style={{ color: "#2D2D2D" }}>{(parseFloat(edit.wt) / (vol / 1000)).toFixed(0)} kg/m³</b></span>}</div>);
+              return (<div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: "#f8f7f4", borderRadius: 10, fontSize: 14, color: "#777" }}><span>📦 {t("נפח", "Vol")}: <b style={{ color: "#2D2D2D" }}>{vol.toFixed(1)} L</b></span>{edit.wt && <span>⚖️ <b style={{ color: "#2D2D2D" }}>{(parseFloat(edit.wt) / (vol / 1000)).toFixed(0)} kg/m³</b></span>}</div>);
             })()}
           </div>
         </div>
@@ -585,7 +595,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
         {/* Electrical specs */}
         <div className="sec">
           <div style={{ padding: "14px 18px", borderBottom: "2px solid #f5f3ef", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ fontSize: 14, fontWeight: 800 }}>⚡ {t("מפרט חשמלי", "Electrical Specs")}</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 800 }}>⚡ {t("מפרט חשמלי", "Electrical Specs")}</h3>
             <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 11, fontWeight: 700, color: edit.is_electric ? "#E65100" : "#aaa" }}>
               <input type="checkbox" checked={edit.is_electric || false} onChange={e => sv("is_electric", e.target.checked)}
                 style={{ width: 18, height: 18, cursor: "pointer", accentColor: "#E65100" }} />
@@ -629,7 +639,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
 
         {/* 3D View */}
         <div className="sec">
-          <div style={{ padding: "14px 18px", borderBottom: "2px solid #f5f3ef" }}><h3 style={{ fontSize: 14, fontWeight: 800 }}>🧊 {t("תצוגה 3D", "3D View")}</h3></div>
+          <div style={{ padding: "14px 18px", borderBottom: "2px solid #f5f3ef" }}><h3 style={{ fontSize: 16, fontWeight: 800 }}>🧊 {t("תצוגה 3D", "3D View")}</h3></div>
           <div style={{ padding: 18 }}>
             {dimsOk ? <ShapeViewer dims={edit.dims} shape={edit.shape} /> : (<div style={{ height: 160, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#f8f7f4", borderRadius: 14, border: "2px dashed #E5E2DC" }}><span style={{ fontSize: 36, opacity: 0.3 }}>🧊</span><p style={{ fontSize: 12, color: "#bbb", textAlign: "center", marginTop: 8 }}>{t("הזן את כל המידות", "Enter all dims")}</p></div>)}
           </div>
@@ -637,13 +647,13 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
 
         {/* Photos */}
         <div className="sec">
-          <div style={{ padding: "14px 18px", borderBottom: "2px solid #f5f3ef", display: "flex", justifyContent: "space-between", alignItems: "center" }}><h3 style={{ fontSize: 14, fontWeight: 800 }}>📸 {t("תמונות", "Photos")}</h3><span style={{ fontSize: 11, fontWeight: 800, color: "#aaa", background: "#f5f3ef", padding: "3px 10px", borderRadius: 20 }}>{edit.photos.length}/6</span></div>
+          <div style={{ padding: "14px 18px", borderBottom: "2px solid #f5f3ef", display: "flex", justifyContent: "space-between", alignItems: "center" }}><h3 style={{ fontSize: 16, fontWeight: 800 }}>📸 {t("תמונות", "Photos")}</h3><span style={{ fontSize: 11, fontWeight: 800, color: "#aaa", background: "#f5f3ef", padding: "3px 10px", borderRadius: 20 }}>{edit.photos.length}/6</span></div>
           <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
               {PHOTO_ANGLES.map((a, i) => {
                 const photo = edit.photos[i];
                 return (<div key={a.id} style={{ aspectRatio: "1", borderRadius: 12, border: `2px ${photo ? "solid #A5D6A7" : "dashed #E5E2DC"}`, background: photo ? "#E8F5E9" : "#FAFAF8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: photo ? "default" : "pointer", overflow: "hidden", position: "relative" }} onClick={() => !photo && fileRef.current?.click()}>
-                  {photo ? (<><img src={photo.dataUrl} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /><button onClick={ev => { ev.stopPropagation(); setEdit(prev => { if (!prev) return prev; const updated = prev.photos.filter((_, j) => j !== i); onSave(prev.id, { photos: updated }); return { ...prev, photos: updated }; }); }} style={{ position: "absolute", top: 3, left: 3, width: 22, height: 22, borderRadius: "50%", background: "rgba(220,38,38,0.9)", border: "none", color: "#fff", cursor: "pointer", fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button></>) : (<><span style={{ fontSize: 22, opacity: 0.25 }}>📷</span><span style={{ fontSize: 10, color: "#bbb", fontWeight: 600 }}>{a[lang as "he" | "en"]}</span></>)}
+                  {photo ? (<><img src={photo.dataUrl} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /><button onClick={ev => { ev.stopPropagation(); setEdit(prev => { if (!prev) return prev; const updated = prev.photos.filter((_, j) => j !== i); onSave(prev.id, { photos: updated }); return { ...prev, photos: updated }; }); }} style={{ position: "absolute", top: 3, left: 3, width: 22, height: 22, borderRadius: "50%", background: "rgba(220,38,38,0.9)", border: "none", color: "#fff", cursor: "pointer", fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button></>) : (<><span style={{ fontSize: 22, opacity: 0.25 }}>📷</span><span style={{ fontSize: 12, color: "#bbb", fontWeight: 600 }}>{a[lang as "he" | "en"]}</span></>)}
                 </div>);
               })}
             </div>
@@ -655,12 +665,12 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
 
         {/* Video */}
         <div className="sec">
-          <div style={{ padding: "14px 18px", borderBottom: "2px solid #f5f3ef" }}><h3 style={{ fontSize: 14, fontWeight: 800 }}>🎬 {t("סרטון 360°", "360° Video")}</h3></div>
+          <div style={{ padding: "14px 18px", borderBottom: "2px solid #f5f3ef" }}><h3 style={{ fontSize: 16, fontWeight: 800 }}>🎬 {t("סרטון 360°", "360° Video")}</h3></div>
           <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
             <div onClick={() => document.getElementById(`vid-${edit.id}`)?.click()} style={{ padding: 28, borderRadius: 14, border: "2px dashed #E5E2DC", background: "#FAFAF8", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer" }}>
               <span style={{ fontSize: 32, opacity: 0.3 }}>🎬</span>
               <p style={{ fontSize: 12, color: "#aaa" }}>{t("צלם/העלה סרטון סיבוב", "Upload rotation video")}</p>
-              <span style={{ fontSize: 10, color: "#bbb", background: "#fff", padding: "4px 12px", borderRadius: 20, border: "1px solid #E5E2DC" }}>{t("עד 100MB • Google Drive", "Up to 100MB • Google Drive")}</span>
+              <span style={{ fontSize: 12, color: "#bbb", background: "#fff", padding: "4px 12px", borderRadius: 20, border: "1px solid #E5E2DC" }}>{t("עד 100MB • Google Drive", "Up to 100MB • Google Drive")}</span>
               <input id={`vid-${edit.id}`} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={async e => { const f = e.target.files?.[0]; if (f && edit) { const dr = await uploadToDrive(f, edit.id, edit.he, "video"); svNow("video", { name: f.name, size: f.size, driveId: dr?.fileId || "" }); } }} />
             </div>
             {edit.video && (<div style={{ display: "flex", alignItems: "center", gap: 10, padding: 12, background: "#DCFCE7", borderRadius: 12 }}><span style={{ fontSize: 18 }}>✅</span><div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#166534" }}>{edit.video.name}</p><p style={{ fontSize: 10, color: "#22C55E" }}>{(edit.video.size / 1024 / 1024).toFixed(1)} MB</p></div><button onClick={() => svNow("video", null)} style={{ padding: 6, background: "transparent", border: "none", cursor: "pointer", fontSize: 16 }}>🗑️</button></div>)}
@@ -708,7 +718,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
         </a>
       </div>
       <div className="sec" style={{ padding: 20 }}>
-        <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 12 }}>💾 {t("אחסון", "Storage")} — <span style={{ color: "#2E7D32" }}>{t("חינם", "Free")}</span></h3>
+        <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 12 }}>💾 {t("אחסון", "Storage")} — <span style={{ color: "#2E7D32" }}>{t("חינם", "Free")}</span></h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div style={{ padding: 16, borderRadius: 12, background: "#E8F5E9", border: "1px solid #A5D6A7" }}><p style={{ fontSize: 12, fontWeight: 800, color: "#2E7D32" }}>📊 Neon Postgres — DB</p><p style={{ fontSize: 11, color: "#388E3C" }}>{t("מטא-דאטה בלבד", "Metadata only")}</p></div>
           <div style={{ padding: 16, borderRadius: 12, background: "#E3F2FD", border: "1px solid #90CAF9" }}><p style={{ fontSize: 12, fontWeight: 800, color: "#1565C0" }}>📁 Google Drive</p><p style={{ fontSize: 11, color: "#1976D2" }}>{t("תמונות + סרטונים", "Photos + videos")}</p></div>
@@ -726,18 +736,18 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
             <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
               <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg,#C0272D,#8B1A1A)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>🚒</div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <h1 style={{ fontSize: 12, fontWeight: 900, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t('אפיון ציוד חומ"ס', "HazMat Equipment")}</h1>
+                <h1 style={{ fontSize: 14, fontWeight: 900, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t('אפיון ציוד חומ"ס', "HazMat Equipment")}</h1>
                 <p style={{ fontSize: 9, color: "#aaa", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t('כבאות והצלה • אלמוג', "Fire & Rescue • Almog")}</p>
               </div>
             </div>
             <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-              <button onClick={() => { if (admin) { setAdmin(false); } else { setShowPwDialog(true); setPwInput(""); setPwError(""); } }} style={{ padding: "5px 10px", borderRadius: 8, border: `2px solid ${admin ? "#C0272D" : "#E5E2DC"}`, background: admin ? "#FEF2F2" : "#fff", color: admin ? "#C0272D" : "#999", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>{admin ? "🔓" : "🔒"}</button>
+              <button onClick={() => { if (admin) { setAdmin(false); } else { setShowPwDialog(true); setPwInput(""); setPwError(""); } }} style={{ padding: "5px 10px", borderRadius: 8, border: `2px solid ${admin ? "#C0272D" : "#E5E2DC"}`, background: admin ? "#FEF2F2" : "#fff", color: admin ? "#C0272D" : "#999", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>{admin ? "🔓" : "🔒"}</button>
               <button onClick={() => setLang(lang === "he" ? "en" : "he")} style={{ padding: "5px 10px", borderRadius: 8, border: "2px solid #E5E2DC", background: "#fff", fontSize: 11, fontWeight: 800, cursor: "pointer", color: "#666" }}>🌐{lang === "he" ? "EN" : "עב"}</button>
             </div>
           </div>
           <div style={{ display: "flex", gap: 2, marginBottom: -2 }}>
             {[{ id: "dash", e: "📊", l: t("לוח בקרה", "Dashboard") }, { id: "detail", e: "📝", l: t("פרטי פריט", "Detail") }, { id: "export", e: "📤", l: t("ייצוא", "Export") }].map(tb => (
-              <button key={tb.id} onClick={() => setTab(tb.id)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", borderRadius: "8px 8px 0 0", border: "none", fontSize: 11, fontWeight: 700, cursor: "pointer", borderBottom: `3px solid ${tab === tb.id ? "#C0272D" : "transparent"}`, background: tab === tb.id ? "#fff" : "transparent", color: tab === tb.id ? "#C0272D" : "#999" }}>{tb.e} {tb.l}</button>
+              <button key={tb.id} onClick={() => setTab(tb.id)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", borderRadius: "8px 8px 0 0", border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer", borderBottom: `3px solid ${tab === tb.id ? "#C0272D" : "transparent"}`, background: tab === tb.id ? "#fff" : "transparent", color: tab === tb.id ? "#C0272D" : "#999" }}>{tb.e} {tb.l}</button>
             ))}
           </div>
         </div>

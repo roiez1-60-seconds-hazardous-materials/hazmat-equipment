@@ -19,12 +19,14 @@ body {
   font-family: 'Heebo', sans-serif;
   background: var(--bg);
   color: #2D2D2D;
+  font-size: 16px;
 }
 
 /* Custom input style */
 .inp {
-  @apply w-full px-3.5 py-3 bg-white border-2 border-[#E5E2DC] rounded-xl text-sm outline-none transition-colors;
+  @apply w-full px-4 py-3.5 bg-white border-2 border-[#E5E2DC] rounded-xl outline-none transition-colors;
   font-family: inherit;
+  font-size: 16px;
 }
 .inp:focus {
   border-color: var(--fire);
@@ -55,12 +57,14 @@ select.inp {
 
 /* Label */
 .lbl {
-  @apply block text-xs font-bold text-gray-400 mb-1.5;
+  @apply block font-bold text-gray-400 mb-1.5;
+  font-size: 13px;
 }
 
 /* Tag */
 .tag {
-  @apply inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-lg;
+  @apply inline-flex items-center gap-1 font-bold px-2.5 py-0.5 rounded-lg;
+  font-size: 13px;
 }
 
 /* Scrollbar */
