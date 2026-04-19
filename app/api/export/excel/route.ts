@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
       containment:   ["הכלת אירוע",   "Containment"],
       monitoring:    ["ציוד ניטור",    "Monitoring"],
       command:       ["ציוד שליטה",    "Command & Control"],
+      washing:       ["ציוד שטיפה",    "Decon / Washing"],
       additional:    ["ציוד נוסף",     "Additional"],
     };
 

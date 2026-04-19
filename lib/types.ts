@@ -1,6 +1,6 @@
 export type Shape = "box" | "cylinder" | "sphere" | "long" | "garment" | "bag" | "irregular";
 export type Status = "existing" | "new";
-export type Category = "protection" | "stabilization" | "containment" | "monitoring" | "command" | "additional";
+export type Category = "protection" | "stabilization" | "containment" | "monitoring" | "command" | "washing" | "additional";
 
 export interface Dims {
   l: string;
@@ -75,6 +75,7 @@ export const CATEGORIES: Record<Category, CategoryDef> = {
   containment:   { he: "הכלת אירוע",   en: "Containment",   emoji: "🔧", color: "#E65100", bg: "#FFF3E0" },
   monitoring:    { he: "ציוד ניטור",    en: "Monitoring",    emoji: "📡", color: "#2E7D32", bg: "#E8F5E9" },
   command:       { he: "ציוד שליטה",    en: "Command & Control", emoji: "🎯", color: "#0277BD", bg: "#E1F5FE" },
+  washing:       { he: "ציוד שטיפה",    en: "Decon / Washing",   emoji: "🚿", color: "#00838F", bg: "#E0F7FA" },
   additional:    { he: "ציוד נוסף",     en: "Additional",    emoji: "🏷️", color: "#6A1B9A", bg: "#F3E5F5" },
 };
 
