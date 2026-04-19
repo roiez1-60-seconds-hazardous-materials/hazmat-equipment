@@ -7,9 +7,9 @@ const GEMINI_KEY = "AIzaSyCbdnQ8_EVWzCHRbe9UsTY0P3BT8zTVCps";
 async function translateBatch(texts: string[]): Promise<string[]> {
   if (!texts.length) return [];
   try {
-    const prompt = `Translate each Hebrew line to English. Return ONLY the translations, one per line, same order. No numbering, no explanations.\n\n${texts.map((t, i) => `${i + 1}. ${t}`).join("\n")}`;
+    const prompt = `Translate each of the following Hebrew lines to English. Return ONLY the English translations, one per line, in the same order. No numbering, no extra text.\n\n${texts.map((t, i) => `${i + 1}. ${t}`).join("\n")}`;
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -19,15 +19,22 @@ async function translateBatch(texts: string[]): Promise<string[]> {
         }),
       }
     );
+    if (!res.ok) {
+      console.error("Gemini API error:", res.status, await res.text());
+      return texts;
+    }
     const data = await res.json();
     const output = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const lines = output.trim().split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").trim());
-    // Pad or trim to match input length
+    if (!output) {
+      console.error("Gemini returned empty:", JSON.stringify(data).substring(0, 500));
+      return texts;
+    }
+    const lines = output.trim().split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").trim()).filter((l: string) => l);
     while (lines.length < texts.length) lines.push(texts[lines.length]);
     return lines.slice(0, texts.length);
   } catch (e) {
-    console.error("Translation error:", e);
-    return texts; // fallback to original
+    console.error("Translation failed:", e);
+    return texts;
   }
 }
 
