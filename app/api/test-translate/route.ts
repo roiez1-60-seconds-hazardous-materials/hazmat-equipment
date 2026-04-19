@@ -1,36 +1,25 @@
 import { NextResponse } from "next/server";
 
-const GEMINI_KEY = "AIzaSyCbdnQ8_EVWzCHRbe9UsTY0P3BT8zTVCps";
-
-// GET /api/test-translate — Test if Gemini translation works
+// GET /api/test-translate — Test Google Translate
 export async function GET() {
   try {
     const testTexts = ["החליפה תאוחסן בתלייה", "ציוד ניטור מלא"];
-    const prompt = `Translate each of the following Hebrew lines to English. Return ONLY the English translations, one per line, in the same order. No numbering, no extra text.\n\n${testTexts.map((t, i) => `${i + 1}. ${t}`).join("\n")}`;
+    const results: string[] = [];
     
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 500 },
-        }),
-      }
-    );
-    
-    const status = res.status;
-    const data = await res.json();
-    const output = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    
+    for (const text of testTexts) {
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=he&tl=en&dt=t&q=${encodeURIComponent(text)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const translated = data?.[0]?.map((s: any) => s[0]).join("") || text;
+      results.push(translated);
+    }
+
     return NextResponse.json({
-      status,
+      status: "ok",
       input: testTexts,
-      output: output.trim().split("\n"),
-      raw: data,
+      output: results,
     });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ error: e.message, stack: e.stack }, { status: 500 });
   }
 }
