@@ -673,18 +673,18 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <h2 style={{ fontSize: 18, fontWeight: 900 }}>{t("ייצוא", "Export")}</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12 }}>
-        <a href={`/api/export/pdf?lang=${lang}`} target="_blank" rel="noopener" style={{ textDecoration: "none" }}>
-          <div className="sec" style={{ padding: 16, cursor: "pointer" }}><span style={{ fontSize: 28 }}>📄</span><h3 style={{ fontSize: 13, fontWeight: 800, margin: "6px 0 3px", color: "#2D2D2D" }}>{t("דו״ח מלא", "Full Report")}</h3><span style={{ fontSize: 11, fontWeight: 700, color: "#C0272D" }}>PDF</span></div>
-        </a>
-        <a href={`/api/export/weight?lang=${lang}`} target="_blank" rel="noopener" style={{ textDecoration: "none" }}>
-          <div className="sec" style={{ padding: 16, cursor: "pointer" }}><span style={{ fontSize: 28 }}>⚖️</span><h3 style={{ fontSize: 13, fontWeight: 800, margin: "6px 0 3px", color: "#2D2D2D" }}>{t("דו״ח משקל", "Weight Report")}</h3><span style={{ fontSize: 11, fontWeight: 700, color: "#C0272D" }}>PDF</span></div>
-        </a>
-        <a href={`/api/export/energy?lang=${lang}`} target="_blank" rel="noopener" style={{ textDecoration: "none" }}>
-          <div className="sec" style={{ padding: 16, cursor: "pointer" }}><span style={{ fontSize: 28 }}>⚡</span><h3 style={{ fontSize: 13, fontWeight: 800, margin: "6px 0 3px", color: "#2D2D2D" }}>{t("צרכני אנרגיה", "Energy Report")}</h3><span style={{ fontSize: 11, fontWeight: 700, color: "#E65100" }}>PDF</span></div>
-        </a>
-        <a href={`/api/export/excel?lang=${lang}`} style={{ textDecoration: "none" }}>
-          <div className="sec" style={{ padding: 16, cursor: "pointer" }}><span style={{ fontSize: 28 }}>📊</span><h3 style={{ fontSize: 13, fontWeight: 800, margin: "6px 0 3px", color: "#2D2D2D" }}>Excel</h3><span style={{ fontSize: 11, fontWeight: 700, color: "#2E7D32" }}>CSV</span></div>
-        </a>
+        <div className="sec" style={{ padding: 16, cursor: "pointer" }} onClick={() => window.open(`/api/export/pdf?lang=${lang}`, "_blank")}>
+          <span style={{ fontSize: 28 }}>📄</span><h3 style={{ fontSize: 13, fontWeight: 800, margin: "6px 0 3px", color: "#2D2D2D" }}>{t("דו״ח מלא", "Full Report")}</h3><span style={{ fontSize: 11, fontWeight: 700, color: "#C0272D" }}>PDF</span>
+        </div>
+        <div className="sec" style={{ padding: 16, cursor: "pointer" }} onClick={() => window.open(`/api/export/weight?lang=${lang}`, "_blank")}>
+          <span style={{ fontSize: 28 }}>⚖️</span><h3 style={{ fontSize: 13, fontWeight: 800, margin: "6px 0 3px", color: "#2D2D2D" }}>{t("דו״ח משקל", "Weight Report")}</h3><span style={{ fontSize: 11, fontWeight: 700, color: "#C0272D" }}>PDF</span>
+        </div>
+        <div className="sec" style={{ padding: 16, cursor: "pointer" }} onClick={() => window.open(`/api/export/energy?lang=${lang}`, "_blank")}>
+          <span style={{ fontSize: 28 }}>⚡</span><h3 style={{ fontSize: 13, fontWeight: 800, margin: "6px 0 3px", color: "#2D2D2D" }}>{t("צרכני אנרגיה", "Energy Report")}</h3><span style={{ fontSize: 11, fontWeight: 700, color: "#E65100" }}>PDF</span>
+        </div>
+        <div className="sec" style={{ padding: 16, cursor: "pointer" }} onClick={() => { window.location.href = `/api/export/excel?lang=${lang}`; }}>
+          <span style={{ fontSize: 28 }}>📊</span><h3 style={{ fontSize: 13, fontWeight: 800, margin: "6px 0 3px", color: "#2D2D2D" }}>Excel</h3><span style={{ fontSize: 11, fontWeight: 700, color: "#2E7D32" }}>CSV</span>
+        </div>
         <a href="https://drive.google.com/drive/folders/1oFbaC6o2EHWrmHf0tfPVgUYc31SYAKrn" target="_blank" rel="noopener" style={{ textDecoration: "none" }}>
           <div className="sec" style={{ padding: 16, cursor: "pointer" }}><span style={{ fontSize: 28 }}>📁</span><h3 style={{ fontSize: 13, fontWeight: 800, margin: "6px 0 3px", color: "#2D2D2D" }}>{t("מדיה", "Media")}</h3><span style={{ fontSize: 11, fontWeight: 700, color: "#1565C0" }}>Drive</span></div>
         </a>
