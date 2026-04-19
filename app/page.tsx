@@ -50,7 +50,7 @@ export default function Page() {
 
   // Poll every 10 seconds for updates from other users
   useEffect(() => {
-    const interval = setInterval(() => fetchItems(true), 10000);
+    const interval = setInterval(() => fetchItems(true), 30000);
     return () => clearInterval(interval);
   }, []);
 
