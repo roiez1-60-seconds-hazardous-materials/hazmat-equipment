@@ -97,7 +97,7 @@ export async function GET(req: NextRequest) {
 
       for (const r of items) {
         const name = isEn ? (r.en || r.he || "") : (r.he || "");
-        const nameSec = isEn ? (r.he || "") : (r.en || "");
+        const nameSec = isEn ? "" : (r.en || ""); // Don't show Hebrew under English title
         const shapeLbl = shapeNames[r.shape] ? shapeNames[r.shape][isEn ? 1 : 0] : "—";
         const statusLbl = statusNames[r.st] ? statusNames[r.st][isEn ? 1 : 0] : r.st;
         const dims = [r.dim_l && `L: ${r.dim_l}`, r.dim_w && `W: ${r.dim_w}`, r.dim_h && `H: ${r.dim_h}`, r.dim_d && `⌀: ${r.dim_d}`].filter(Boolean).join(" × ") || "—";
@@ -146,39 +146,39 @@ export async function GET(req: NextRequest) {
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&display=swap');
   * { box-sizing: border-box; margin: 0; }
-  body { font-family: 'Heebo', sans-serif; color: #2D2D2D; padding: 24px; font-size: 14px; line-height: 1.5; }
+  body { font-family: 'Heebo', sans-serif; color: #2D2D2D; padding: 24px; font-size: 16px; line-height: 1.6; }
   @media print { body { padding: 12px; } .no-print { display: none; } .item-card { break-inside: avoid; } }
 
-  .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 4px solid #C0272D; margin-bottom: 24px; }
-  .header h1 { font-size: 26px; color: #C0272D; line-height: 1.3; }
-  .header .sub { font-size: 14px; color: #888; margin-top: 4px; }
+  .header { display: flex; justify-content: space-between; align-items: center; padding: 24px 0; border-bottom: 4px solid #C0272D; margin-bottom: 28px; }
+  .header h1 { font-size: 32px; color: #C0272D; line-height: 1.3; }
+  .header .sub { font-size: 16px; color: #888; margin-top: 6px; }
   .header .stats { text-align: ${isEn ? "right" : "left"}; }
-  .header .stat { display: inline-block; padding: 6px 14px; background: #f5f3ef; border-radius: 10px; margin: 3px; font-weight: 700; font-size: 13px; }
+  .header .stat { display: inline-block; padding: 8px 16px; background: #f5f3ef; border-radius: 10px; margin: 3px; font-weight: 700; font-size: 15px; }
 
-  .cat-header { color: white; font-weight: 900; font-size: 18px; padding: 10px 20px; border-radius: 10px; margin: 28px 0 14px; }
+  .cat-header { color: white; font-weight: 900; font-size: 22px; padding: 12px 24px; border-radius: 12px; margin: 32px 0 16px; }
 
-  .item-card { border: 2px solid #e5e2dc; border-radius: 14px; margin-bottom: 14px; overflow: hidden; }
-  .item-header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: #fafaf8; border-bottom: 1px solid #e5e2dc; }
-  .item-id { width: 36px; height: 36px; border-radius: 10px; color: white; font-weight: 900; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .item-card { border: 2px solid #e5e2dc; border-radius: 16px; margin-bottom: 16px; overflow: hidden; }
+  .item-header { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: #fafaf8; border-bottom: 1px solid #e5e2dc; }
+  .item-id { width: 44px; height: 44px; border-radius: 12px; color: white; font-weight: 900; font-size: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .item-title { flex: 1; min-width: 0; }
-  .item-name { font-size: 16px; font-weight: 900; line-height: 1.3; }
-  .item-name-sec { font-size: 12px; color: #999; margin-top: 2px; ${isEn ? "" : "direction: ltr; text-align: left;"} }
-  .item-status { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 8px; flex-shrink: 0; }
+  .item-name { font-size: 20px; font-weight: 900; line-height: 1.3; }
+  .item-name-sec { font-size: 14px; color: #999; margin-top: 2px; ${isEn ? "" : "direction: ltr; text-align: left;"} }
+  .item-status { font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 8px; flex-shrink: 0; }
   .item-status.existing { background: #E8F5E9; color: #2E7D32; }
   .item-status.new { background: #FEF3C7; color: #92400E; }
 
-  .fields-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0; padding: 0; }
-  .field { padding: 10px 18px; border-bottom: 1px solid #f0efeb; display: flex; flex-direction: column; gap: 2px; }
-  .field-label { font-size: 11px; font-weight: 700; color: #999; }
-  .field-value { font-size: 15px; font-weight: 700; }
+  .fields-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0; padding: 0; }
+  .field { padding: 12px 20px; border-bottom: 1px solid #f0efeb; display: flex; flex-direction: column; gap: 3px; }
+  .field-label { font-size: 13px; font-weight: 700; color: #999; }
+  .field-value { font-size: 18px; font-weight: 700; }
   .elec-field { background: #FFF8E1; }
   .mono { font-family: monospace; direction: ltr; }
 
-  .item-url { padding: 8px 18px; border-bottom: 1px solid #f0efeb; font-size: 12px; display: flex; gap: 8px; align-items: center; }
-  .item-url a { color: #1565C0; text-decoration: none; word-break: break-all; font-size: 12px; }
-  .item-notes { padding: 10px 18px; font-size: 13px; color: #666; display: flex; gap: 8px; align-items: flex-start; }
+  .item-url { padding: 10px 20px; border-bottom: 1px solid #f0efeb; font-size: 14px; display: flex; gap: 10px; align-items: center; }
+  .item-url a { color: #1565C0; text-decoration: none; word-break: break-all; font-size: 13px; }
+  .item-notes { padding: 12px 20px; font-size: 15px; color: #666; display: flex; gap: 10px; align-items: flex-start; }
 
-  .footer { margin-top: 30px; padding-top: 14px; border-top: 3px solid #e5e2dc; display: flex; justify-content: space-between; font-size: 12px; color: #bbb; }
+  .footer { margin-top: 36px; padding-top: 16px; border-top: 3px solid #e5e2dc; display: flex; justify-content: space-between; font-size: 14px; color: #bbb; }
 
   .print-btn { position: fixed; bottom: 20px; ${isEn ? "right" : "left"}: 20px; padding: 14px 28px; background: #C0272D; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.2); z-index: 100; font-family: 'Heebo'; }
   .lang-toggle { position: fixed; bottom: 20px; ${isEn ? "left" : "right"}: 20px; padding: 14px 24px; background: #fff; color: #2D2D2D; border: 2px solid #E5E2DC; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; font-family: 'Heebo'; text-decoration: none; }
