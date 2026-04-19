@@ -480,7 +480,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                       {item.is_electric && <span className="tag" style={{ background: "#FFF3E0", color: "#E65100" }}>⚡ {item.voltage ? `${item.voltage}V` : t("חשמלי", "Electric")}</span>}
                       {item.qty && <span className="tag" style={{ background: "#f5f5f0", color: "#666" }}>×{item.qty}</span>}
-                      {item.wt && <span className="tag" style={{ background: "#E8F5E9", color: "#2E7D32" }}>{item.wt}kg</span>}
+                      {item.wt && <span className="tag" style={{ background: "#E8F5E9", color: "#2E7D32" }}>{(item.qty || 0) > 1 ? `${((parseFloat(item.wt)||0) * (item.qty||1)).toFixed(1)}kg` : `${item.wt}kg`}</span>}
                       {item.co && <span className="tag" style={{ background: "#F3E5F5", color: "#6A1B9A" }}>{item.co}</span>}
                     </div>
                   </div>
@@ -572,7 +572,21 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
                 return (<div key={fld}><label className="lbl"><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: dl.color, marginInlineEnd: 4 }} />{t(dl.he, dl.en)} ({dl.unit})</label><input type="number" value={(edit.dims as any)[fld] || ""} onChange={e => svD(fld, e.target.value)} className="inp" placeholder={fld === "d" ? "⌀" : fld.toUpperCase()} style={{ textAlign: "center", fontFamily: "monospace", borderColor: (edit.dims as any)[fld] ? dl.color + "55" : "#E5E2DC" }} /></div>);
               })}
             </div>
-            <div><label className="lbl">⚖️ {t("משקל (kg)", "Weight (kg)")}</label><input type="number" step="0.1" value={edit.wt} onChange={e => sv("wt", e.target.value)} className="inp" placeholder="kg" style={{ textAlign: "center", fontFamily: "monospace" }} /></div>
+            <div><label className="lbl">⚖️ {t("משקל יחידה (kg)", "Unit Weight (kg)")}</label><input type="number" step="0.1" value={edit.wt} onChange={e => sv("wt", e.target.value)} className="inp" placeholder="kg" style={{ textAlign: "center", fontFamily: "monospace" }} /></div>
+            {parseFloat(edit.wt) > 100 && (
+              <div style={{ padding: "8px 14px", background: "#FEF2F2", borderRadius: 10, fontSize: 13, color: "#C0272D", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>⚠️ {t("משקל גבוה — וודא שהערך בק״ג ולא בגרם", "High weight — verify value is in kg, not grams")}</div>
+            )}
+            {edit.wt && (edit.qty || 0) > 1 && (() => {
+              const unitWt = parseFloat(edit.wt) || 0;
+              const qty = edit.qty || 1;
+              const totalWt = unitWt * qty;
+              return (
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: "#E8F5E9", borderRadius: 10, fontSize: 14, color: "#2E7D32", fontWeight: 700 }}>
+                  <span>⚖️ {t("משקל כולל", "Total Weight")}: {unitWt} × {qty} =</span>
+                  <span style={{ fontSize: 16, fontWeight: 900 }}>{totalWt.toFixed(1)} kg</span>
+                </div>
+              );
+            })()}
             {(() => {
               const vol = calcVolume(edit);
               if (vol === null) return null;
