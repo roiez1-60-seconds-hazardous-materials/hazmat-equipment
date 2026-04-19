@@ -286,7 +286,13 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
     }
   };
 
-  useEffect(() => { window.scrollTo({ top: 0 }); }, [tab]);
+  const dashScrollRef = useRef(0);
+
+  useEffect(() => { 
+    if (tab !== "dash") {
+      window.scrollTo({ top: 0 }); 
+    }
+  }, [tab]);
 
   const shown = items.filter(i => {
     if (filter !== "all" && i.cat !== filter) return false;
@@ -302,7 +308,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
     avg: items.length ? Math.round(items.reduce((s, i) => s + calcCompletion(i), 0) / items.length) : 0,
   }), [items]);
 
-  const openItem = (item: EquipmentItem) => { setEdit({ ...item }); setTab("detail"); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const openItem = (item: EquipmentItem) => { dashScrollRef.current = window.scrollY; setEdit({ ...item }); setTab("detail"); };
 
   const handleAdd = async () => {
     const ni = await onAdd();
@@ -518,7 +524,7 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
           alignItems: "center", 
           gap: 8,
         }}>
-          <button onClick={() => { setTab("dash"); setEdit(null); }} style={{ padding: "4px 10px", borderRadius: 10, background: "#fff", border: "2px solid #E5E2DC", cursor: "pointer", fontSize: 20, flexShrink: 0, lineHeight: 1, fontWeight: 700, color: "#666" }}>{lang === "he" ? "→" : "←"}</button>
+          <button onClick={() => { setTab("dash"); setEdit(null); setTimeout(() => window.scrollTo({ top: dashScrollRef.current }), 50); }} style={{ padding: "4px 10px", borderRadius: 10, background: "#fff", border: "2px solid #E5E2DC", cursor: "pointer", fontSize: 20, flexShrink: 0, lineHeight: 1, fontWeight: 700, color: "#666" }}>{lang === "he" ? "→" : "←"}</button>
           <Ring value={p} size={36} color={c.color} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2, flexWrap: "wrap" }}>
