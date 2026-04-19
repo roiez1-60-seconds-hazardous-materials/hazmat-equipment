@@ -6,109 +6,137 @@ export async function GET(req: NextRequest) {
   try {
     const lang = req.nextUrl.searchParams.get("lang") === "en" ? "en" : "he";
     const isEn = lang === "en";
-    
     const sql = getDb();
     const rows = await sql`SELECT * FROM equipment ORDER BY id ASC`;
 
     const catNames: Record<string, [string, string, string]> = {
-      protection:    ["ציוד מיגון",   "Protection",    "#C0272D"],
-      stabilization: ["ציוד ייצוב",   "Stabilization", "#1565C0"],
-      containment:   ["ציוד הכלת אירוע", "Containment",   "#E65100"],
-      monitoring:    ["ציוד ניטור",    "Monitoring",    "#2E7D32"],
-      command:       ["ציוד שליטה",    "Command & Control", "#0277BD"],
-      washing:       ["ציוד שטיפה",    "Decon / Washing",   "#00838F"],
-      additional:    ["ציוד נוסף",     "Additional",    "#6A1B9A"],
+      protection:    ["ציוד מיגון",        "Protection",        "#C0272D"],
+      stabilization: ["ציוד ייצוב",        "Stabilization",     "#1565C0"],
+      containment:   ["ציוד הכלת אירוע",   "Containment",       "#E65100"],
+      monitoring:    ["ציוד ניטור",         "Monitoring",        "#2E7D32"],
+      command:       ["ציוד שליטה",         "Command & Control", "#0277BD"],
+      washing:       ["ציוד שטיפה",         "Decon / Washing",   "#00838F"],
+      additional:    ["ציוד נוסף",          "Additional",        "#6A1B9A"],
     };
 
     const shapeNames: Record<string, [string, string]> = {
-      box:       ["תיבה",      "Box"],
-      cylinder:  ["גליל",      "Cylinder"],
-      sphere:    ["כדורי",      "Spherical"],
-      long:      ["ארוך וצר",   "Long & Narrow"],
-      garment:   ["חליפה/תלוי", "Garment/Hanging"],
-      bag:       ["שק/תיק",    "Bag"],
-      irregular: ["לא סדיר",    "Irregular"],
+      box: ["תיבה", "Box"], cylinder: ["גליל", "Cylinder"], sphere: ["כדורי", "Spherical"],
+      long: ["ארוך וצר", "Long & Narrow"], garment: ["חליפה/תלוי", "Garment/Hanging"],
+      bag: ["שק/תיק", "Bag"], irregular: ["לא סדיר", "Irregular"],
     };
 
-    // Text translations
-    const T = {
-      title:    { he: 'אפיון ציוד מכולת חומ"ס', en: "HazMat Container Equipment Specification" },
-      subtitle: { he: "כבאות והצלה • ענף חומ\"ס • אלמוג", en: "Fire & Rescue • HazMat Division" },
-      items:    { he: "פריטים", en: "items" },
-      measured: { he: "נמדדו", en: "measured" },
-      photos:   { he: "צולמו", en: "photographed" },
-      elec:     { he: "חשמליים", en: "electric" },
-      printBtn: { he: "🖨️ הדפס / שמור PDF", en: "🖨️ Print / Save PDF" },
-      col_id:    { he: "#", en: "#" },
-      col_desc:  { he: "תיאור", en: "Description" },
-      col_qty:   { he: "כמות", en: "Qty" },
-      col_shape: { he: "צורה", en: "Shape" },
-      col_dims:  { he: "מידות (cm)", en: "Dimensions (cm)" },
-      col_wt:    { he: "משקל", en: "Weight" },
-      col_elec:  { he: "⚡ חשמל", en: "⚡ Electric" },
-      col_co:    { he: "חברה", en: "Company" },
-      col_notes: { he: "הערות", en: "Notes" },
-      footer:    { he: '© כבאות והצלה • ענף חומ"ס', en: "© Fire & Rescue • HazMat Division" },
+    const statusNames: Record<string, [string, string]> = {
+      existing: ["קיים", "Existing"], new: ["חדש", "New"],
+    };
+
+    // Full translations
+    const T: Record<string, Record<string,string>> = {
+      title:     { he: 'דו״ח אפיון ציוד מכולת חומ"ס', en: "HazMat Container Equipment Specification Report" },
+      subtitle:  { he: "כבאות והצלה • ענף חומ\"ס • אלמוג", en: "Israel Fire & Rescue • HazMat Division • Almog" },
+      printBtn:  { he: "🖨️ הדפס / שמור PDF", en: "🖨️ Print / Save PDF" },
+      items:     { he: "פריטים", en: "Items" },
+      measured:  { he: "נמדדו", en: "Measured" },
+      photos:    { he: "צולמו", en: "Photographed" },
+      elec:      { he: "חשמליים", en: "Electric" },
+      totalWt:   { he: "משקל כולל", en: "Total Weight" },
+      status:    { he: "סטטוס", en: "Status" },
+      shape:     { he: "צורה", en: "Shape" },
+      dims:      { he: "מידות", en: "Dimensions" },
+      weight:    { he: "משקל", en: "Weight" },
+      qty:       { he: "כמות", en: "Quantity" },
+      company:   { he: "חברה / יצרן", en: "Manufacturer" },
+      electric:  { he: "מפרט חשמלי", en: "Electrical Specs" },
+      url:       { he: "קישור יצרן", en: "Manufacturer URL" },
+      notes:     { he: "הערות", en: "Notes" },
+      mediaFiles:{ he: "קבצי מדיה", en: "Media Files" },
+      photosLbl: { he: "תמונות", en: "Photos" },
+      videoLbl:  { he: "סרטון", en: "Video" },
+      volume:    { he: "נפח", en: "Volume" },
+      yes:       { he: "כן", en: "Yes" },
+      no:        { he: "לא", en: "No" },
+      none:      { he: "אין", en: "None" },
+      footer:    { he: '© כבאות והצלה • ענף חומ"ס', en: "© Israel Fire & Rescue • HazMat Division" },
       generated: { he: "נוצר ב-", en: "Generated on " },
     };
-    const tr = (k: keyof typeof T) => T[k][lang as "he" | "en"];
+    const tr = (k: string) => T[k]?.[lang] || k;
+
+    // Calculate volume
+    const calcVol = (r: any): string => {
+      const l = parseFloat(r.dim_l) || 0;
+      const w = parseFloat(r.dim_w) || 0;
+      const h = parseFloat(r.dim_h) || 0;
+      const d = parseFloat(r.dim_d) || 0;
+      let vol = 0;
+      if (r.shape === "sphere" && d) vol = (4/3) * Math.PI * Math.pow(d/2, 3);
+      else if (r.shape === "cylinder" && d && h) vol = Math.PI * Math.pow(d/2, 2) * h;
+      else if (r.shape === "long" && l && d) vol = Math.PI * Math.pow(d/2, 2) * l;
+      else if (l && w && h) vol = l * w * h;
+      if (vol > 0) return (vol / 1000).toFixed(1) + " L";
+      return "—";
+    };
 
     // Group by category
     const groups: Record<string, any[]> = {};
-    rows.forEach((r: any) => {
-      if (!groups[r.cat]) groups[r.cat] = [];
-      groups[r.cat].push(r);
-    });
+    rows.forEach((r: any) => { if (!groups[r.cat]) groups[r.cat] = []; groups[r.cat].push(r); });
 
-    let itemsHtml = "";
-    for (const [cat, items] of Object.entries(groups)) {
-      const [he, en, color] = catNames[cat] || [cat, cat, "#666"];
-      const catLabel = isEn ? en : he;
-      itemsHtml += `<div class="cat-header" style="background:${color}">${catLabel} (${items.length})</div>`;
-      itemsHtml += `<table><thead><tr>
-        <th>${tr("col_id")}</th>
-        <th>${tr("col_desc")}</th>
-        <th>${tr("col_qty")}</th>
-        <th>${tr("col_shape")}</th>
-        <th>${tr("col_dims")}</th>
-        <th>${tr("col_wt")}</th>
-        <th>${tr("col_elec")}</th>
-        <th>${tr("col_co")}</th>
-        <th>${tr("col_notes")}</th>
-      </tr></thead><tbody>`;
-      
-      for (const r of items) {
-        const dims = [r.dim_l && `L:${r.dim_l}`, r.dim_w && `W:${r.dim_w}`, r.dim_h && `H:${r.dim_h}`, r.dim_d && `⌀:${r.dim_d}`].filter(Boolean).join(" × ") || "—";
-        const electric = r.is_electric 
-          ? ([r.voltage && `${r.voltage}V`, r.current && `${r.current}A`, r.power && `${r.power}W`].filter(Boolean).join(" / ") || "⚡")
-          : "—";
-        const shapeLbl = shapeNames[r.shape] ? shapeNames[r.shape][isEn ? 1 : 0] : "—";
-        
-        // Description: show primary language first, other as small text
-        const primary = isEn ? (r.en || r.he || "") : (r.he || "");
-        const secondary = isEn ? (r.he || "") : (r.en || "");
-        
-        itemsHtml += `<tr>
-          <td class="center">${r.id}</td>
-          <td><div class="primary">${primary}</div>${secondary ? `<div class="secondary">${secondary}</div>` : ""}</td>
-          <td class="center">${r.qty || "—"}</td>
-          <td class="center">${shapeLbl}</td>
-          <td class="mono">${dims}</td>
-          <td class="center">${r.wt ? r.wt + " kg" : "—"}</td>
-          <td class="mono center ${r.is_electric ? "elec" : ""}">${electric}</td>
-          <td>${r.co || "—"}</td>
-          <td class="small">${r.notes || ""}</td>
-        </tr>`;
-      }
-      itemsHtml += `</tbody></table>`;
-    }
-
+    // Stats
     const totalItems = rows.length;
     const measured = rows.filter((r: any) => r.dim_l || r.dim_d).length;
     const withPhotos = rows.filter((r: any) => (r.photos || []).length > 0).length;
     const electricItems = rows.filter((r: any) => r.is_electric).length;
     const electricComplete = rows.filter((r: any) => r.is_electric && r.voltage && (r.current || r.power)).length;
+    const totalWeight = rows.reduce((sum: number, r: any) => sum + (parseFloat(r.wt) || 0) * (r.qty || 1), 0);
     const date = new Date().toLocaleDateString(isEn ? "en-US" : "he-IL");
+
+    // Build item cards
+    let itemsHtml = "";
+    for (const [cat, items] of Object.entries(groups)) {
+      const [he, en, color] = catNames[cat] || [cat, cat, "#666"];
+      const catLabel = isEn ? en : he;
+      itemsHtml += `<div class="cat-header" style="background:${color}">${catLabel} (${items.length})</div>`;
+
+      for (const r of items) {
+        const name = isEn ? (r.en || r.he || "") : (r.he || "");
+        const nameSec = isEn ? (r.he || "") : (r.en || "");
+        const shapeLbl = shapeNames[r.shape] ? shapeNames[r.shape][isEn ? 1 : 0] : "—";
+        const statusLbl = statusNames[r.st] ? statusNames[r.st][isEn ? 1 : 0] : r.st;
+        const dims = [r.dim_l && `L: ${r.dim_l}`, r.dim_w && `W: ${r.dim_w}`, r.dim_h && `H: ${r.dim_h}`, r.dim_d && `⌀: ${r.dim_d}`].filter(Boolean).join(" × ") || "—";
+        const vol = calcVol(r);
+        const photoCount = (r.photos || []).length;
+        const hasVideo = !!r.video;
+
+        let elecHtml = "";
+        if (r.is_electric) {
+          const parts = [r.voltage && `${r.voltage}V`, r.current && `${r.current}A`, r.power && `${r.power}W`].filter(Boolean).join(" / ");
+          elecHtml = `<div class="field elec-field"><span class="field-label">⚡ ${tr("electric")}</span><span class="field-value">${parts || "—"}</span></div>`;
+        }
+
+        itemsHtml += `
+        <div class="item-card">
+          <div class="item-header">
+            <span class="item-id" style="background:${color}">${r.id}</span>
+            <div class="item-title">
+              <div class="item-name">${name}</div>
+              ${nameSec ? `<div class="item-name-sec">${nameSec}</div>` : ""}
+            </div>
+            <span class="item-status ${r.st}">${statusLbl}</span>
+          </div>
+          <div class="fields-grid">
+            <div class="field"><span class="field-label">📐 ${tr("shape")}</span><span class="field-value">${shapeLbl}</span></div>
+            <div class="field"><span class="field-label">📏 ${tr("dims")} (cm)</span><span class="field-value mono">${dims}</span></div>
+            <div class="field"><span class="field-label">📦 ${tr("volume")}</span><span class="field-value mono">${vol}</span></div>
+            <div class="field"><span class="field-label">⚖️ ${tr("weight")}</span><span class="field-value mono">${r.wt ? r.wt + " kg" : "—"}</span></div>
+            <div class="field"><span class="field-label">🔢 ${tr("qty")}</span><span class="field-value">${r.qty || "—"}</span></div>
+            <div class="field"><span class="field-label">🏭 ${tr("company")}</span><span class="field-value">${r.co || "—"}</span></div>
+            ${elecHtml}
+            <div class="field"><span class="field-label">📸 ${tr("photosLbl")}</span><span class="field-value">${photoCount > 0 ? photoCount : "—"}</span></div>
+            <div class="field"><span class="field-label">🎬 ${tr("videoLbl")}</span><span class="field-value">${hasVideo ? "✅" : "—"}</span></div>
+          </div>
+          ${r.url ? `<div class="item-url"><span class="field-label">🔗 ${tr("url")}</span><a href="${r.url}" target="_blank">${r.url}</a></div>` : ""}
+          ${r.notes ? `<div class="item-notes"><span class="field-label">📝 ${tr("notes")}</span><span>${r.notes}</span></div>` : ""}
+        </div>`;
+      }
+    }
 
     const html = `<!DOCTYPE html>
 <html lang="${lang}" dir="${isEn ? "ltr" : "rtl"}">
@@ -118,33 +146,42 @@ export async function GET(req: NextRequest) {
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&display=swap');
   * { box-sizing: border-box; margin: 0; }
-  body { font-family: 'Heebo', sans-serif; color: #2D2D2D; padding: 20px; font-size: 11px; }
-  @media print { body { padding: 0; } .no-print { display: none; } }
-  
-  .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 3px solid #C0272D; margin-bottom: 20px; }
-  .header h1 { font-size: 22px; color: #C0272D; }
-  .header .sub { font-size: 12px; color: #888; }
-  .header .stats { text-align: ${isEn ? "right" : "left"}; direction: ltr; }
-  .header .stat { display: inline-block; padding: 4px 12px; background: #f5f3ef; border-radius: 8px; margin: 2px; font-weight: 700; font-size: 11px; }
-  
-  .cat-header { color: white; font-weight: 900; font-size: 14px; padding: 8px 16px; border-radius: 8px; margin: 20px 0 8px; }
-  
-  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 10px; }
-  th { background: #f8f7f4; padding: 6px 8px; text-align: ${isEn ? "left" : "right"}; font-weight: 800; border-bottom: 2px solid #e5e2dc; font-size: 10px; }
-  td { padding: 6px 8px; border-bottom: 1px solid #f0efeb; vertical-align: top; }
-  tr:hover { background: #fafaf8; }
-  .center { text-align: center; }
-  .mono { font-family: monospace; font-size: 10px; direction: ltr; text-align: ${isEn ? "left" : "center"}; }
-  .primary { font-weight: 700; font-size: 11px; line-height: 1.4; ${isEn ? "direction: ltr; text-align: left;" : ""} }
-  .secondary { font-size: 9px; color: #999; ${isEn ? "" : "direction: ltr; text-align: left;"} }
-  .small { font-size: 9px; color: #777; }
-  .elec { background: #FFF3E0 !important; color: #E65100; font-weight: 700; }
-  
-  .footer { margin-top: 30px; padding-top: 12px; border-top: 2px solid #e5e2dc; display: flex; justify-content: space-between; font-size: 10px; color: #bbb; }
-  
-  .print-btn { position: fixed; bottom: 20px; ${isEn ? "right" : "left"}: 20px; padding: 14px 28px; background: #C0272D; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.2); z-index: 100; font-family: 'Heebo', sans-serif; }
-  .print-btn:hover { background: #8B1A1A; }
-  .lang-toggle { position: fixed; bottom: 20px; ${isEn ? "left" : "right"}: 20px; padding: 14px 24px; background: #fff; color: #2D2D2D; border: 2px solid #E5E2DC; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; font-family: 'Heebo', sans-serif; text-decoration: none; }
+  body { font-family: 'Heebo', sans-serif; color: #2D2D2D; padding: 24px; font-size: 14px; line-height: 1.5; }
+  @media print { body { padding: 12px; } .no-print { display: none; } .item-card { break-inside: avoid; } }
+
+  .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 4px solid #C0272D; margin-bottom: 24px; }
+  .header h1 { font-size: 26px; color: #C0272D; line-height: 1.3; }
+  .header .sub { font-size: 14px; color: #888; margin-top: 4px; }
+  .header .stats { text-align: ${isEn ? "right" : "left"}; }
+  .header .stat { display: inline-block; padding: 6px 14px; background: #f5f3ef; border-radius: 10px; margin: 3px; font-weight: 700; font-size: 13px; }
+
+  .cat-header { color: white; font-weight: 900; font-size: 18px; padding: 10px 20px; border-radius: 10px; margin: 28px 0 14px; }
+
+  .item-card { border: 2px solid #e5e2dc; border-radius: 14px; margin-bottom: 14px; overflow: hidden; }
+  .item-header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: #fafaf8; border-bottom: 1px solid #e5e2dc; }
+  .item-id { width: 36px; height: 36px; border-radius: 10px; color: white; font-weight: 900; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .item-title { flex: 1; min-width: 0; }
+  .item-name { font-size: 16px; font-weight: 900; line-height: 1.3; }
+  .item-name-sec { font-size: 12px; color: #999; margin-top: 2px; ${isEn ? "" : "direction: ltr; text-align: left;"} }
+  .item-status { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 8px; flex-shrink: 0; }
+  .item-status.existing { background: #E8F5E9; color: #2E7D32; }
+  .item-status.new { background: #FEF3C7; color: #92400E; }
+
+  .fields-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0; padding: 0; }
+  .field { padding: 10px 18px; border-bottom: 1px solid #f0efeb; display: flex; flex-direction: column; gap: 2px; }
+  .field-label { font-size: 11px; font-weight: 700; color: #999; }
+  .field-value { font-size: 15px; font-weight: 700; }
+  .elec-field { background: #FFF8E1; }
+  .mono { font-family: monospace; direction: ltr; }
+
+  .item-url { padding: 8px 18px; border-bottom: 1px solid #f0efeb; font-size: 12px; display: flex; gap: 8px; align-items: center; }
+  .item-url a { color: #1565C0; text-decoration: none; word-break: break-all; font-size: 12px; }
+  .item-notes { padding: 10px 18px; font-size: 13px; color: #666; display: flex; gap: 8px; align-items: flex-start; }
+
+  .footer { margin-top: 30px; padding-top: 14px; border-top: 3px solid #e5e2dc; display: flex; justify-content: space-between; font-size: 12px; color: #bbb; }
+
+  .print-btn { position: fixed; bottom: 20px; ${isEn ? "right" : "left"}: 20px; padding: 14px 28px; background: #C0272D; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.2); z-index: 100; font-family: 'Heebo'; }
+  .lang-toggle { position: fixed; bottom: 20px; ${isEn ? "left" : "right"}: 20px; padding: 14px 24px; background: #fff; color: #2D2D2D; border: 2px solid #E5E2DC; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; font-family: 'Heebo'; text-decoration: none; }
 </style>
 </head>
 <body>
@@ -158,10 +195,11 @@ export async function GET(req: NextRequest) {
     <div class="sub">${tr("subtitle")}</div>
   </div>
   <div class="stats">
-    <div class="sub">${date}</div>
+    <div class="sub" style="font-size:13px;font-weight:700">${date}</div>
     <div><span class="stat">📦 ${totalItems} ${tr("items")}</span></div>
     <div><span class="stat">📐 ${measured} ${tr("measured")}</span> <span class="stat">📸 ${withPhotos} ${tr("photos")}</span></div>
     <div><span class="stat">⚡ ${electricComplete}/${electricItems} ${tr("elec")}</span></div>
+    <div><span class="stat">⚖️ ${tr("totalWt")}: ${totalWeight.toFixed(1)} kg</span></div>
   </div>
 </div>
 
