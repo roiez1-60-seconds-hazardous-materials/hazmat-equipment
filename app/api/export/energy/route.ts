@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       col_qty:   { he: "כמות", en: "Qty" },
       col_v:     { he: "מתח (V)", en: "Voltage (V)" },
       col_a:     { he: "זרם (A)", en: "Current (A)" },
-      col_w:     { he: "הספק (W)", en: "Power (W)" },
+      col_w:     { he: "הספק יחידה (W)", en: "Unit Power (W)" },
       col_total: { he: "הספק כולל (W)", en: "Total Power (W)" },
       col_co:    { he: "חברה", en: "Company" },
       grand:     { he: "סה״כ הספק מקסימלי", en: "Maximum Total Power" },

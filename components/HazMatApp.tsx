@@ -625,13 +625,24 @@ export default function HazMatApp({ items, onSave, onAdd, onDelete }: Props) {
                 const v = parseFloat(edit.voltage || "0");
                 const a = parseFloat(edit.current || "0");
                 const w = parseFloat(edit.power || "0");
-                if (v && a && !w) {
-                  return <div style={{ padding: "10px 14px", background: "#FFF3E0", borderRadius: 10, fontSize: 12, color: "#E65100", display: "flex", alignItems: "center", gap: 8 }}>💡 {t("הספק מחושב:", "Calculated power:")} <b>{(v * a).toFixed(0)} W</b></div>;
-                }
-                if (v && w && !a) {
-                  return <div style={{ padding: "10px 14px", background: "#FFF3E0", borderRadius: 10, fontSize: 12, color: "#E65100", display: "flex", alignItems: "center", gap: 8 }}>💡 {t("זרם מחושב:", "Calculated current:")} <b>{(w / v).toFixed(2)} A</b></div>;
-                }
-                return null;
+                const unitW = w || (v && a ? v * a : 0);
+                const qty = edit.qty || 1;
+                const totalW = unitW * qty;
+                
+                return (<>
+                  {v && a && !w && (
+                    <div style={{ padding: "10px 14px", background: "#FFF3E0", borderRadius: 10, fontSize: 14, color: "#E65100", display: "flex", alignItems: "center", gap: 8 }}>💡 {t("הספק מחושב:", "Calculated power:")} <b>{unitW.toFixed(0)} W</b></div>
+                  )}
+                  {v && w && !a && (
+                    <div style={{ padding: "10px 14px", background: "#FFF3E0", borderRadius: 10, fontSize: 14, color: "#E65100", display: "flex", alignItems: "center", gap: 8 }}>💡 {t("זרם מחושב:", "Calculated current:")} <b>{(w / v).toFixed(2)} A</b></div>
+                  )}
+                  {unitW > 0 && qty > 1 && (
+                    <div style={{ padding: "10px 14px", background: "#FCE4EC", borderRadius: 10, fontSize: 14, color: "#C0272D", display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 700 }}>
+                      <span>⚡ {t("הספק כולל", "Total Power")}: {unitW.toFixed(0)}W × {qty} =</span>
+                      <span style={{ fontSize: 18, fontWeight: 900 }}>{totalW.toFixed(0)} W ({(totalW/1000).toFixed(1)} kW)</span>
+                    </div>
+                  )}
+                </>);
               })()}
               <div style={{ fontSize: 11, color: "#999", padding: "8px 12px", background: "#fafaf8", borderRadius: 8 }}>
                 💡 {t("חובה מילוי עבור ציוד חשמלי — נדרש לצורך תכנון המכולה", "Required for electric equipment — needed for container electrical planning")}

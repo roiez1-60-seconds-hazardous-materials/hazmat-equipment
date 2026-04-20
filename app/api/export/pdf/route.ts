@@ -152,8 +152,15 @@ export async function GET(req: NextRequest) {
 
         let elecHtml = "";
         if (r.is_electric) {
-          const parts = [r.voltage && `${r.voltage}V`, r.current && `${r.current}A`, r.power && `${r.power}W`].filter(Boolean).join(" / ");
-          elecHtml = `<div class="field elec-field"><span class="field-label">⚡ ${tr("electric")}</span><span class="field-value">${parts || "—"}</span></div>`;
+          const v = parseFloat(r.voltage) || 0;
+          const a = parseFloat(r.current) || 0;
+          let w = parseFloat(r.power) || 0;
+          if (!w && v && a) w = v * a;
+          const qty = r.qty || 1;
+          const parts = [r.voltage && `${r.voltage}V`, r.current && `${r.current}A`, w ? `${w.toFixed(0)}W` : ""].filter(Boolean).join(" / ");
+          const totalLabel = isEn ? "Total" : "כולל";
+          const totalPart = qty > 1 && w ? ` → <strong style="color:#C0272D">${totalLabel}: ${(w * qty).toFixed(0)}W (${(w * qty / 1000).toFixed(1)}kW)</strong>` : "";
+          elecHtml = `<div class="field elec-field"><span class="field-label">⚡ ${tr("electric")}</span><span class="field-value">${parts || "—"}${totalPart}</span></div>`;
         }
 
           const unitWt = parseFloat(r.wt) || 0;
